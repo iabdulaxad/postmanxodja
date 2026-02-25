@@ -4,6 +4,8 @@ import type { ExecuteResponse, SentRequest } from '../types';
 interface Props {
   response: ExecuteResponse | null;
   request?: SentRequest | null;
+  onSaveResponse?: (name: string) => void;
+  canSaveResponse?: boolean;
 }
 
 // Collapsible section component
@@ -193,8 +195,10 @@ function getMethodColor(method: string): string {
   return colors[method.toUpperCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
 }
 
-export default function ResponseViewer({ response, request }: Props) {
+export default function ResponseViewer({ response, request, onSaveResponse, canSaveResponse }: Props) {
   const [activeTab, setActiveTab] = useState<'body' | 'headers' | 'request' | 'schema'>('body');
+  const [showSaveInput, setShowSaveInput] = useState(false);
+  const [saveResponseName, setSaveResponseName] = useState('');
 
   // Parse response body for schema
   const parsedBody = useMemo(() => {
@@ -289,6 +293,69 @@ export default function ResponseViewer({ response, request }: Props) {
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Time:</span>
             <span className="font-semibold text-base text-gray-800 dark:text-gray-200">{response.time}ms</span>
           </div>
+          {/* Save Response Button */}
+          {canSaveResponse && onSaveResponse && (
+            <div className="flex items-center gap-2 ml-auto">
+              {showSaveInput ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={saveResponseName}
+                    onChange={(e) => setSaveResponseName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && saveResponseName.trim()) {
+                        onSaveResponse(saveResponseName.trim());
+                        setSaveResponseName('');
+                        setShowSaveInput(false);
+                      } else if (e.key === 'Escape') {
+                        setShowSaveInput(false);
+                        setSaveResponseName('');
+                      }
+                    }}
+                    placeholder="Response name..."
+                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-gray-100 w-48"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => {
+                      if (saveResponseName.trim()) {
+                        onSaveResponse(saveResponseName.trim());
+                        setSaveResponseName('');
+                        setShowSaveInput(false);
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg font-medium transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSaveInput(false);
+                      setSaveResponseName('');
+                    }}
+                    className="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm rounded-lg font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    const defaultName = `${response.status} ${getStatusText(response.status)}`;
+                    setSaveResponseName(defaultName);
+                    setShowSaveInput(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-lg font-medium transition-colors shadow-sm"
+                  title="Save this response as an example"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  Save Response
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

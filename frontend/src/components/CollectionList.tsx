@@ -3,18 +3,20 @@ import { getCollections, getCollection, deleteCollection, updateCollection, expo
 import { useTeam } from '../contexts/TeamContext';
 import ConfirmModal from './ConfirmModal';
 import InputModal from './InputModal';
-import type { Collection, PostmanItem, PostmanCollection } from '../types';
+import type { Collection, PostmanItem, PostmanCollection, PostmanResponse } from '../types';
 
 interface Props {
   onRequestSelect: (request: any) => void;
+  onLoadSavedResponse?: (response: PostmanResponse, collectionId: number, itemPath: string, responseIndex: number) => void;
   refreshTrigger: number;
 }
 
 interface DeleteTarget {
-  type: 'collection' | 'folder' | 'request';
+  type: 'collection' | 'folder' | 'request' | 'response';
   collectionId: number;
   path?: string;
   name: string;
+  responseIndex?: number;
 }
 
 interface AddTarget {
@@ -23,10 +25,11 @@ interface AddTarget {
   parentPath?: string;
 }
 
-export default function CollectionList({ onRequestSelect, refreshTrigger }: Props) {
+export default function CollectionList({ onRequestSelect, onLoadSavedResponse, refreshTrigger }: Props) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<Set<number>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
   const [collectionData, setCollectionData] = useState<Map<number, PostmanCollection>>(new Map());
   const { currentTeam } = useTeam();
 
@@ -90,6 +93,16 @@ export default function CollectionList({ onRequestSelect, refreshTrigger }: Prop
       if (deleteTarget.type === 'collection') {
         await deleteCollection(currentTeam.id, deleteTarget.collectionId);
         loadCollections();
+      } else if (deleteTarget.type === 'response') {
+        // Delete a saved response from a request item
+        const collection = collectionData.get(deleteTarget.collectionId);
+        if (collection && deleteTarget.path && deleteTarget.responseIndex !== undefined) {
+          const updatedCollection = deleteResponseFromCollection(collection, deleteTarget.path, deleteTarget.responseIndex);
+          await updateCollection(currentTeam.id, deleteTarget.collectionId, {
+            raw_json: JSON.stringify(updatedCollection),
+          });
+          setCollectionData(new Map(collectionData.set(deleteTarget.collectionId, updatedCollection)));
+        }
       } else {
         // Delete folder or request from collection
         const collection = collectionData.get(deleteTarget.collectionId);
@@ -205,6 +218,41 @@ export default function CollectionList({ onRequestSelect, refreshTrigger }: Prop
     };
   };
 
+  const deleteResponseFromCollection = (collection: PostmanCollection, requestPath: string, responseIndex: number): PostmanCollection => {
+    const pathParts = requestPath.split('/');
+    const requestName = pathParts[pathParts.length - 1];
+    const folderPath = pathParts.slice(0, -1);
+
+    const deleteFromItems = (items: PostmanItem[], currentPath: string[]): PostmanItem[] => {
+      if (currentPath.length === 0) {
+        return items.map(item => {
+          if (item.name === requestName && item.request && item.response) {
+            return {
+              ...item,
+              response: item.response.filter((_, i) => i !== responseIndex),
+            };
+          }
+          return item;
+        });
+      }
+
+      return items.map(item => {
+        if (item.name === currentPath[0] && item.item) {
+          return {
+            ...item,
+            item: deleteFromItems(item.item, currentPath.slice(1)),
+          };
+        }
+        return item;
+      });
+    };
+
+    return {
+      ...collection,
+      item: deleteFromItems(collection.item, folderPath),
+    };
+  };
+
   const addItemToCollection = (collection: PostmanCollection, parentPath: string | undefined, newItem: PostmanItem): PostmanCollection => {
     if (!parentPath) {
       return {
@@ -248,6 +296,16 @@ export default function CollectionList({ onRequestSelect, refreshTrigger }: Prop
       newExpanded.add(folderPath);
     }
     setExpandedFolders(newExpanded);
+  };
+
+  const toggleResponses = (itemPath: string) => {
+    const newExpanded = new Set(expandedResponses);
+    if (newExpanded.has(itemPath)) {
+      newExpanded.delete(itemPath);
+    } else {
+      newExpanded.add(itemPath);
+    }
+    setExpandedResponses(newExpanded);
   };
 
   const handleStartRename = (collectionId: number, path: string, currentName: string, e: React.MouseEvent) => {
@@ -386,59 +444,146 @@ export default function CollectionList({ onRequestSelect, refreshTrigger }: Prop
 
     if (item.request) {
       const isRenaming = renamingItem?.collectionId === collectionId && renamingItem?.path === itemPath;
+      const hasResponses = item.response && item.response.length > 0;
+      const responsesExpanded = expandedResponses.has(itemPath);
 
       return (
-        <div
-          key={itemPath}
-          className="group py-2 px-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center"
-          style={{ paddingLeft }}
-        >
+        <div key={itemPath}>
           <div
-            className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"
-            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
+            className="group py-2 px-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center"
+            style={{ paddingLeft }}
           >
-            <span
-              className="font-semibold text-xs"
-              style={{ color: getMethodColor(item.request.method) }}
+            <div
+              className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"
+              onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
             >
-              {item.request.method}
-            </span>
-            {isRenaming ? (
-              <input
-                type="text"
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onBlur={handleFinishRename}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === 'Enter') {
-                    handleFinishRename();
-                  } else if (e.key === 'Escape') {
-                    handleCancelRename();
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="text-sm px-2 py-1 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 min-w-0 flex-1 max-w-[200px]"
-                autoFocus
-              />
-            ) : (
               <span
-                className="text-sm text-gray-700 dark:text-gray-300 truncate"
-                onDoubleClick={(e) => handleStartRename(collectionId, itemPath, item.name, e)}
+                className="font-semibold text-xs"
+                style={{ color: getMethodColor(item.request.method) }}
               >
-                {item.name}
+                {item.request.method}
               </span>
-            )}
+              {isRenaming ? (
+                <input
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={handleFinishRename}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                      handleFinishRename();
+                    } else if (e.key === 'Escape') {
+                      handleCancelRename();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-sm px-2 py-1 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 min-w-0 flex-1 max-w-[200px]"
+                  autoFocus
+                />
+              ) : (
+                <span
+                  className="text-sm text-gray-700 dark:text-gray-300 truncate"
+                  onDoubleClick={(e) => handleStartRename(collectionId, itemPath, item.name, e)}
+                >
+                  {item.name}
+                </span>
+              )}
+              {hasResponses && (
+                <span className="text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-semibold flex-shrink-0">
+                  {item.response!.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {hasResponses && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleResponses(itemPath);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded"
+                  title={responsesExpanded ? 'Hide saved responses' : 'Show saved responses'}
+                >
+                  <svg className={`w-4 h-4 text-purple-500 transition-transform ${responsesExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={(e) => handleDeleteClick({ type: 'request', collectionId, path: itemPath, name: item.name }, e)}
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                title="Delete request"
+              >
+                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <button
-            onClick={(e) => handleDeleteClick({ type: 'request', collectionId, path: itemPath, name: item.name }, e)}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
-            title="Delete request"
-          >
-            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          {/* Saved Responses */}
+          {hasResponses && responsesExpanded && (
+            <div className="bg-purple-50/50 dark:bg-purple-900/10">
+              {item.response!.map((resp, respIdx) => {
+                // Extract original request info for display
+                const origReq = resp.originalRequest;
+                const origMethod = origReq?.method || '';
+                const origUrl = origReq
+                  ? (typeof origReq.url === 'string' ? origReq.url : (origReq.url as any)?.raw || '')
+                  : '';
+                const hasBody = !!(origReq?.body?.raw);
+
+                return (
+                  <div
+                    key={`${itemPath}-resp-${respIdx}`}
+                    className="group/resp flex items-center gap-1.5 py-1.5 px-3 border-b border-gray-100 dark:border-gray-700 hover:bg-purple-100/50 dark:hover:bg-purple-900/20 cursor-pointer"
+                    style={{ paddingLeft: `${depth * 16 + 32}px` }}
+                    onClick={() => onLoadSavedResponse?.(resp, collectionId, itemPath, respIdx)}
+                    title={`${origMethod ? origMethod + ' ' : ''}${origUrl}${hasBody ? '\n\nHas request body' : ''}`}
+                  >
+                    <svg className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {origMethod && (
+                      <span
+                        className="text-[10px] font-bold flex-shrink-0"
+                        style={{ color: getMethodColor(origMethod) }}
+                      >
+                        {origMethod}
+                      </span>
+                    )}
+                    <span
+                      className="text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0"
+                      style={{
+                        color: resp.code >= 200 && resp.code < 300 ? '#28a745' : resp.code >= 400 ? '#dc3545' : '#ffc107',
+                        backgroundColor: resp.code >= 200 && resp.code < 300 ? '#d4edda' : resp.code >= 400 ? '#f8d7da' : '#fff3cd',
+                      }}
+                    >
+                      {resp.code}
+                    </span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{resp.name}</span>
+                    {hasBody && (
+                      <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-label="Has request body">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {resp.responseTime !== undefined && resp.responseTime > 0 && (
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{resp.responseTime}ms</span>
+                    )}
+                    <button
+                      onClick={(e) => handleDeleteClick({ type: 'response', collectionId, path: itemPath, name: resp.name, responseIndex: respIdx }, e)}
+                      className="opacity-0 group-hover/resp:opacity-100 p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded ml-auto flex-shrink-0"
+                      title="Delete saved response"
+                    >
+                      <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }

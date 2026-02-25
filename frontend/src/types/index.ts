@@ -79,7 +79,19 @@ export interface PostmanCollection {
 export interface PostmanItem {
   name: string;
   request?: PostmanRequest;
+  response?: PostmanResponse[];
   item?: PostmanItem[];
+}
+
+// Saved example response (Postman collection v2.1 format)
+export interface PostmanResponse {
+  name: string;
+  originalRequest?: PostmanRequest;
+  status: string;
+  code: number;
+  header?: PostmanKeyValue[];
+  body: string;
+  responseTime?: number;
 }
 
 export interface PostmanRequest {
@@ -203,4 +215,5 @@ export interface RequestTab {
   // Collection source info for syncing changes back
   collectionId?: number;
   itemPath?: string; // Path to the item in the collection (e.g., "folder1/folder2/request")
+  savedResponseIndex?: number; // Index of saved response this tab was opened from
 }
