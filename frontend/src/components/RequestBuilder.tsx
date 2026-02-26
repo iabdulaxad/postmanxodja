@@ -164,8 +164,9 @@ export default function RequestBuilder({
 
     try {
       const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key.trim(), h.value]));
-      const queryParamsObj = Object.fromEntries(queryParams.filter(q => q.key).map(q => [q.key.trim(), q.value]));
 
+      // url already contains query params (synced by buildUrlWithParams),
+      // so pass empty query_params to avoid duplication
       const request: ExecuteRequest = {
         method,
         url,
@@ -173,7 +174,7 @@ export default function RequestBuilder({
         body: bodyType === 'raw' ? body : '',
         body_type: bodyType,
         form_data: bodyType === 'form-data' ? formData.filter(f => f.key) : undefined,
-        query_params: queryParamsObj,
+        query_params: {},
         environment_id: selectedEnvId
       };
 
@@ -193,7 +194,7 @@ export default function RequestBuilder({
         headers: headersObj,
         body: body, // Always pass the body, let the viewer handle display
         bodyType,
-        queryParams: queryParamsObj,
+        queryParams: Object.fromEntries(queryParams.filter(q => q.key).map(q => [q.key.trim(), q.value])),
         timestamp: Date.now(),
       };
 
@@ -315,21 +316,19 @@ export default function RequestBuilder({
                   const parsed = parseCurl(trimmed);
                   setUrl(parsed.url);
                   setMethod(parsed.method);
-                  if (parsed.body) {
-                    setBody(parsed.body);
-                    setBodyType('raw');
-                  }
+                  // Always reset body/bodyType — if curl has no body, clear it
+                  setBody(parsed.body || '');
+                  setBodyType(parsed.body ? 'raw' : 'none');
+                  // Always reset headers — if curl has no headers, clear them
                   const parsedHeaders = Object.entries(parsed.headers).map(([key, value]) => ({ key, value }));
-                  if (parsedHeaders.length > 0) {
-                    setHeaders(parsedHeaders);
-                  }
+                  setHeaders(parsedHeaders);
                   const parsedParams = parseQueryParamsFromUrl(parsed.url);
                   setQueryParams(parsedParams.length > 0 ? parsedParams : []);
                   notifyUpdate({
                     method: parsed.method,
                     url: parsed.url,
-                    headers: parsedHeaders.length > 0 ? parsedHeaders : undefined,
-                    body: parsed.body || undefined,
+                    headers: parsedHeaders,
+                    body: parsed.body || '',
                     queryParams: parsedParams,
                   });
                   return;
@@ -386,13 +385,11 @@ export default function RequestBuilder({
         <button
           onClick={() => {
             const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key.trim(), h.value]));
-            const queryParamsObj = Object.fromEntries(queryParams.filter(q => q.key).map(q => [q.key.trim(), q.value]));
             const curl = generateCurl({
               method,
               url,
               headers: headersObj,
               body: bodyType === 'raw' ? body : undefined,
-              queryParams: queryParamsObj,
             });
             navigator.clipboard.writeText(curl);
             setCurlCopied(true);

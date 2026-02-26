@@ -60,7 +60,10 @@ export async function executeRequestDirect(
   const urlObj = new URL(targetURL);
   if (request.query_params) {
     for (const [key, value] of Object.entries(request.query_params)) {
-      if (key) urlObj.searchParams.append(key, value);
+      if (!key) continue;
+      // Skip if this key=value pair already exists in the URL
+      if (urlObj.searchParams.getAll(key).includes(value)) continue;
+      urlObj.searchParams.append(key, value);
     }
   }
 

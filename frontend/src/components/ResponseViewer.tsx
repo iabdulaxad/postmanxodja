@@ -468,7 +468,6 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                     url: request.url,
                     headers: request.headers,
                     body: request.body || undefined,
-                    queryParams: request.queryParams,
                   });
                   navigator.clipboard.writeText(curl);
                   const btn = document.activeElement as HTMLButtonElement;
