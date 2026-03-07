@@ -110,7 +110,20 @@ export default function InviteAcceptPage() {
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-blue-600 mb-2">PostmanXodja</h1>
+            <div className="flex justify-center mb-4">
+              <svg className="w-14 h-14" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="invite-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#3b82f6"/>
+                    <stop offset="100%" stopColor="#6366f1"/>
+                  </linearGradient>
+                </defs>
+                <rect width="64" height="64" rx="14" fill="url(#invite-bg)"/>
+                <path d="M18 22h28M18 32h20M18 42h24" stroke="white" strokeWidth="4" strokeLinecap="round"/>
+                <circle cx="50" cy="32" r="4" fill="#fbbf24"/>
+                <path d="M46 38l4 4 6-8" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
             <p className="text-gray-600">Team Invitation</p>
           </div>
 

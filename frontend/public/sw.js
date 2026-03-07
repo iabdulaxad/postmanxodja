@@ -1,5 +1,5 @@
 /**
- * Service Worker for PostmanXodja PWA.
+ * Service Worker for API Testing Tool PWA.
  *
  * Strategy:
  *  - Navigation requests: network-first, fallback to cached index.html
@@ -10,7 +10,7 @@
  *    so offline reloads work after at least one successful visit.
  */
 
-var CACHE_NAME = "postmanxodja-v3";
+var CACHE_NAME = "api-tester-v4";
 
 var PRECACHE_ASSETS = ["/", "/index.html", "/manifest.json"];
 
