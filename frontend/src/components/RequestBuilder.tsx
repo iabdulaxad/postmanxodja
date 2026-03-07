@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { executeRequest } from '../services/api';
 import VariableInput from './VariableInput';
+import JsonTreeEditor from './JsonTreeEditor';
 import { parseCurl, generateCurl } from '../utils/curlParser';
 import type { ExecuteRequest, ExecuteResponse, Environment, RequestTab, BodyType, FormDataItem, SentRequest } from '../types';
 
@@ -46,8 +47,7 @@ export default function RequestBuilder({
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body'>('params');
   const [curlCopied, setCurlCopied] = useState(false);
-
-  console.log("body ==>", body, typeof body)
+  const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('raw');
 
   // Track if this is the first render to skip initial onUpdate call
   const isInitialMount = useRef(true);
@@ -601,47 +601,81 @@ export default function RequestBuilder({
 
               {bodyType === 'raw' && (
                 <div>
-                  <div className="flex justify-end mb-2">
-                    <button
-                      onClick={() => {
-                        try {
-                          const placeholders: string[] = [];
-                          const safeBody = body.replace(/\{\{([^}]+)\}\}/g, (m) => {
-                            const idx = placeholders.length;
-                            placeholders.push(m);
-                            return `"__VAR_${idx}__"`;
-                          });
+                  <div className="flex justify-end mb-2 gap-2">
+                    <div className="flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5">
+                      <button
+                        onClick={() => setBodyViewMode('raw')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                          bodyViewMode === 'raw'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        Raw
+                      </button>
+                      <button
+                        onClick={() => setBodyViewMode('tree')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                          bodyViewMode === 'tree'
+                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        Tree
+                      </button>
+                    </div>
+                    {bodyViewMode === 'raw' && (
+                      <button
+                        onClick={() => {
+                          try {
+                            const placeholders: string[] = [];
+                            const safeBody = body.replace(/\{\{([^}]+)\}\}/g, (m) => {
+                              const idx = placeholders.length;
+                              placeholders.push(m);
+                              return `"__VAR_${idx}__"`;
+                            });
 
-                          const parsed = JSON.parse(safeBody);
-                          let formatted = JSON.stringify(parsed, null, 2);
+                            const parsed = JSON.parse(safeBody);
+                            let formatted = JSON.stringify(parsed, null, 2);
 
-                          placeholders.forEach((original, idx) => {
-                            formatted = formatted.replace(`"__VAR_${idx}__"`, original);
-                          });
+                            placeholders.forEach((original, idx) => {
+                              formatted = formatted.replace(`"__VAR_${idx}__"`, original);
+                            });
 
-                          setBody(formatted);
-                          notifyUpdate({ body: formatted });
-                        } catch {
-                          // not valid JSON — ignore
-                        }
-                      }}
-                      className="px-3 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Beautify JSON
-                    </button>
+                            setBody(formatted);
+                            notifyUpdate({ body: formatted });
+                          } catch {
+                            // not valid JSON — ignore
+                          }
+                        }}
+                        className="px-3 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        Beautify JSON
+                      </button>
+                    )}
                   </div>
-                  <VariableInput
-                    value={body}
-                    onChange={(value) => {
-                      setBody(value);
-                      notifyUpdate({ body: value });
-                    }}
-                    placeholder="Request body (JSON, text, etc.)"
-                    environments={environments}
-                    selectedEnvId={selectedEnvId}
-                    multiline
-                    jsonHighlight
-                  />
+                  {bodyViewMode === 'raw' ? (
+                    <VariableInput
+                      value={body}
+                      onChange={(value) => {
+                        setBody(value);
+                        notifyUpdate({ body: value });
+                      }}
+                      placeholder="Request body (JSON, text, etc.)"
+                      environments={environments}
+                      selectedEnvId={selectedEnvId}
+                      multiline
+                      jsonHighlight
+                    />
+                  ) : (
+                    <JsonTreeEditor
+                      value={body}
+                      onChange={(value) => {
+                        setBody(value);
+                        notifyUpdate({ body: value });
+                      }}
+                    />
+                  )}
                 </div>
               )}
 

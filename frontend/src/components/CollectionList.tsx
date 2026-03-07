@@ -452,10 +452,10 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
           <div
             className="group py-2 px-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center"
             style={{ paddingLeft }}
+            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
           >
             <div
               className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"
-              onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
             >
               <span
                 className="font-semibold text-xs"
