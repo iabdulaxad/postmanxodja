@@ -5,10 +5,17 @@ import ConfirmModal from './ConfirmModal';
 import InputModal from './InputModal';
 import type { Collection, PostmanItem, PostmanCollection, PostmanResponse } from '../types';
 
+interface CollectionDataUpdate {
+  collectionId: number;
+  data: PostmanCollection;
+  trigger: number;
+}
+
 interface Props {
   onRequestSelect: (request: any) => void;
   onLoadSavedResponse?: (response: PostmanResponse, collectionId: number, itemPath: string, responseIndex: number) => void;
   refreshTrigger: number;
+  collectionDataUpdate?: CollectionDataUpdate | null;
 }
 
 interface DeleteTarget {
@@ -25,7 +32,7 @@ interface AddTarget {
   parentPath?: string;
 }
 
-export default function CollectionList({ onRequestSelect, onLoadSavedResponse, refreshTrigger }: Props) {
+export default function CollectionList({ onRequestSelect, onLoadSavedResponse, refreshTrigger, collectionDataUpdate }: Props) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<Set<number>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -49,6 +56,17 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       setCollectionData(new Map());
     }
   }, [refreshTrigger, currentTeam?.id]);
+
+  // In-place update for a specific collection (no full refresh, preserves expansion state)
+  useEffect(() => {
+    if (collectionDataUpdate) {
+      setCollectionData(prev => {
+        const newMap = new Map(prev);
+        newMap.set(collectionDataUpdate.collectionId, collectionDataUpdate.data);
+        return newMap;
+      });
+    }
+  }, [collectionDataUpdate?.trigger]);
 
   const loadCollections = async () => {
     if (!currentTeam) return;

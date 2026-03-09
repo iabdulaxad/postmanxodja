@@ -14,7 +14,7 @@ import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
 import { useTeam } from '../contexts/TeamContext';
 import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection } from '../services/api';
-import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse } from '../types';
+import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [responses, setResponses] = useState<Map<string, ExecuteResponse>>(new Map());
   const [sentRequests, setSentRequests] = useState<Map<string, SentRequest>>(new Map());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [collectionDataUpdate, setCollectionDataUpdate] = useState<{ collectionId: number; data: PostmanCollection; trigger: number } | null>(null);
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -436,8 +437,8 @@ export default function DashboardPage() {
         } : t
       ));
 
-      // Refresh collections
-      setRefreshTrigger(prev => prev + 1);
+      // Update only the affected collection in sidebar (no full refresh)
+      setCollectionDataUpdate({ collectionId, data: updatedCollection, trigger: Date.now() });
 
       return true;
     } catch (err) {
@@ -530,7 +531,8 @@ export default function DashboardPage() {
         raw_json: JSON.stringify(updatedCollection),
       });
 
-      setRefreshTrigger(prev => prev + 1);
+      // Update only the affected collection in sidebar (no full refresh)
+      setCollectionDataUpdate({ collectionId: activeTab.collectionId, data: updatedCollection, trigger: Date.now() });
     } catch (err) {
       console.error('Failed to save response:', err);
       alert('Failed to save response to collection');
@@ -792,6 +794,7 @@ export default function DashboardPage() {
                 onRequestSelect={handleRequestSelect}
                 onLoadSavedResponse={handleLoadSavedResponse}
                 refreshTrigger={refreshTrigger}
+                collectionDataUpdate={collectionDataUpdate}
               />
             </div>
             <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
@@ -814,6 +817,7 @@ export default function DashboardPage() {
               onRequestSelect={handleRequestSelect}
               onLoadSavedResponse={handleLoadSavedResponse}
               refreshTrigger={refreshTrigger}
+              collectionDataUpdate={collectionDataUpdate}
             />
           </div>
           <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
