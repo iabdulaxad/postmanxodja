@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-do
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getGoogleAuthUrl } from '../services/auth';
+import { SpiderCursor } from '../components/ui/spider-cursor';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -49,11 +50,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 relative">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Spider Cursor Background */}
+      <SpiderCursor />
+
       {/* Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 p-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        className="absolute top-4 right-4 z-20 p-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors"
         title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       >
         {theme === 'light' ? (
@@ -67,8 +71,8 @@ export default function LoginPage() {
         )}
       </button>
 
-      <div className="max-w-md w-full mx-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+      <div className="relative z-10 max-w-md w-full mx-4">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Welcome back</h1>
             <p className="text-gray-600 dark:text-gray-400">Sign in to your account</p>
