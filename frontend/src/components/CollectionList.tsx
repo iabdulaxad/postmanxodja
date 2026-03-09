@@ -476,7 +476,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"
             >
               <span
-                className="font-semibold text-xs"
+                className="font-semibold text-[10px] uppercase tracking-wide shrink-0"
                 style={{ color: getMethodColor(item.request.method) }}
               >
                 {item.request.method}
@@ -496,19 +496,19 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-sm px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
+                  className="text-xs px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
                   autoFocus
                 />
               ) : (
                 <span
-                  className="text-sm text-foreground truncate"
+                  className="text-xs text-foreground truncate"
                   onDoubleClick={(e) => handleStartRename(collectionId, itemPath, item.name, e)}
                 >
                   {item.name}
                 </span>
               )}
               {hasResponses && (
-                <span className="text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold flex-shrink-0">
+                <span className="text-[10px] min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-primary/10 text-primary font-medium shrink-0">
                   {item.response!.length}
                 </span>
               )}
@@ -530,10 +530,10 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               )}
               <button
                 onClick={(e) => handleDeleteClick({ type: 'request', collectionId, path: itemPath, name: item.name }, e)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/10 rounded"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
                 title="Delete request"
               >
-                <svg className="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
@@ -564,14 +564,14 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     </svg>
                     {origMethod && (
                       <span
-                        className="text-[10px] font-bold flex-shrink-0"
+                        className="text-[10px] font-semibold uppercase tracking-wide shrink-0"
                         style={{ color: getMethodColor(origMethod) }}
                       >
                         {origMethod}
                       </span>
                     )}
                     <span
-                      className="text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0"
+                      className="text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0"
                       style={{
                         color: getStatusCodeColor(resp.code).color,
                         backgroundColor: getStatusCodeColor(resp.code).bg,
@@ -579,7 +579,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     >
                       {resp.code}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate">{resp.name}</span>
+                    <span className="text-[11px] text-muted-foreground truncate">{resp.name}</span>
                     {hasBody && (
                       <svg className="w-3 h-3 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-label="Has request body">
                         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
@@ -590,10 +590,10 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     )}
                     <button
                       onClick={(e) => handleDeleteClick({ type: 'response', collectionId, path: itemPath, name: resp.name, responseIndex: respIdx }, e)}
-                      className="opacity-0 group-hover/resp:opacity-100 p-0.5 hover:bg-destructive/10 rounded ml-auto flex-shrink-0"
+                      className="opacity-0 group-hover/resp:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md ml-auto flex-shrink-0 transition-colors"
                       title="Delete saved response"
                     >
-                      <svg className="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -613,12 +613,12 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       return (
         <div key={itemPath}>
           <div
-            className="group py-1 px-2 font-semibold bg-muted text-foreground text-xs cursor-pointer hover:bg-accent flex items-center gap-1.5"
+            className="group py-1 px-2 font-medium bg-muted text-foreground text-xs cursor-pointer hover:bg-accent flex items-center gap-1.5"
             style={{ paddingLeft }}
           >
             <div className="flex-1 flex items-center gap-1.5 min-w-0 overflow-hidden" onClick={() => !isRenaming && toggleFolder(itemPath)}>
               <span className="text-muted-foreground text-[10px]">{isExpanded ? '▼' : '▶'}</span>
-              <svg className="w-3.5 h-3.5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3.5 h-3.5 text-primary/70" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               {isRenaming ? (
@@ -644,33 +644,33 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                   {item.name}
                 </span>
               )}
-              <span className="text-xs text-muted-foreground flex-shrink-0">{item.item.filter(i => i.request || i.item).length}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0">{item.item.filter(i => i.request || i.item).length}</span>
             </div>
-            <div className="opacity-0 group-hover:opacity-100 flex items-center">
+            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
               <button
                 onClick={(e) => handleAddClick({ type: 'folder', collectionId, parentPath: itemPath }, e)}
-                className="p-0.5 hover:bg-primary/10 rounded"
+                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
                 title="Add folder"
               >
-                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                 </svg>
               </button>
               <button
                 onClick={(e) => handleAddClick({ type: 'request', collectionId, parentPath: itemPath }, e)}
-                className="p-0.5 hover:bg-primary/10 rounded"
+                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
                 title="Add request"
               >
-                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
               <button
                 onClick={(e) => handleDeleteClick({ type: 'folder', collectionId, path: itemPath, name: item.name }, e)}
-                className="p-0.5 hover:bg-destructive/10 rounded"
+                className="p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
                 title="Delete folder"
               >
-                <svg className="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
@@ -752,7 +752,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card">
-      <h3 className="px-3 py-2 text-sm font-semibold text-foreground border-b border-border shrink-0">Collections</h3>
+      <h3 className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border shrink-0">Collections</h3>
       {/* Search */}
       <div className="px-2 py-1.5 border-b border-border shrink-0">
         <div className="relative">
@@ -792,7 +792,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               onClick={() => !isRenamingCollection && toggleCollection(collection.id)}
               className="group px-2 py-1.5 cursor-pointer bg-muted hover:bg-accent border-b border-border flex justify-between items-center"
             >
-              <div className="text-xs font-medium text-foreground flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+              <div className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
                 <span className="text-muted-foreground text-[10px] flex-shrink-0">{expandedCollections.has(collection.id) ? '▼' : '▶'}</span>
                 {isRenamingCollection ? (
                   <input
@@ -809,7 +809,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                       }
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-sm px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
+                    className="text-xs px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
                     autoFocus
                   />
                 ) : (
@@ -826,19 +826,19 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                   <>
                     <button
                       onClick={(e) => handleAddClick({ type: 'folder', collectionId: collection.id }, e)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-primary/10 rounded"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
                       title="Add folder"
                     >
-                      <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                       </svg>
                     </button>
                     <button
                       onClick={(e) => handleAddClick({ type: 'request', collectionId: collection.id }, e)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-primary/10 rounded"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
                       title="Add request"
                     >
-                      <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
@@ -854,16 +854,21 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                       alert('Failed to export collection');
                     }
                   }}
-                  className="px-2 py-0.5 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] rounded shadow-sm"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded-md transition-colors"
                   title="Export to Postman format"
                 >
-                  Export
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
                 </button>
                 <button
                   onClick={(e) => handleDeleteClick({ type: 'collection', collectionId: collection.id, name: collection.name }, e)}
-                  className="px-2 py-0.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-[10px] rounded shadow-sm"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
+                  title="Delete collection"
                 >
-                  Delete
+                  <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               </div>
             </div>

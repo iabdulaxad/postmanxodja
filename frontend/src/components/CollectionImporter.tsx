@@ -61,16 +61,16 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
   return (
     <>
       <div className="p-4 border-b border-border bg-card">
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             onClick={() => setShowCreateModal(true)}
             disabled={loading}
             className={`
-              flex-1 px-3 py-2 rounded-lg shadow-sm font-medium text-sm
-               flex items-center justify-center gap-1
+              flex-1 px-3 py-2 rounded-lg font-medium text-sm
+              flex items-center justify-center gap-1.5 transition-colors
               ${loading
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                : 'bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/15 dark:hover:bg-primary/25'
               }
             `}
           >
@@ -82,11 +82,11 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
           <label
             htmlFor="file-upload"
             className={`
-              flex-1 px-3 py-2 rounded-lg shadow-sm font-medium text-sm
-               flex items-center justify-center gap-1 cursor-pointer
+              flex-1 px-3 py-2 rounded-lg font-medium text-sm
+              flex items-center justify-center gap-1.5 cursor-pointer transition-colors
               ${loading
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-accent hover:bg-accent/80 text-foreground border border-border'
+                : 'bg-accent hover:bg-accent/70 text-accent-foreground dark:hover:bg-accent/80'
               }
             `}
           >
@@ -100,11 +100,11 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
               onClick={onUCodeImport}
               disabled={loading}
               className={`
-                flex-1 px-3 py-2 rounded-lg shadow-sm font-medium text-sm
-                flex items-center justify-center gap-1
+                flex-1 px-3 py-2 rounded-lg font-medium text-sm
+                flex items-center justify-center gap-1.5 transition-colors
                 ${loading
                   ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                  : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                  : 'bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/15 dark:hover:bg-primary/25'
                 }
               `}
             >

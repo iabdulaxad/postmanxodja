@@ -138,15 +138,15 @@ export default function TabsBar({
             onClick={() => onTabSelect(tab.id)}
             style={{ transition: 'none' }}
             className={`
-              group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 md:px-3 py-2 md:py-1.5 cursor-pointer font-semibold text-xs border-b-2
-              min-w-[80px] sm:min-w-[100px] md:min-w-[120px] max-w-[160px] md:max-w-[200px] flex-shrink-0
+              group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 md:px-3 py-2 md:py-1.5 cursor-pointer font-medium text-xs border-b-2
+              min-w-[80px] sm:min-w-[100px] md:min-w-[120px] max-w-[160px] md:max-w-[200px] shrink-0
               ${activeTabId === tab.id
                 ? 'border-primary text-primary bg-primary/10'
                 : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
               }
             `}
           >
-            <span className={`text-xs font-bold ${getMethodColor(tab.method)}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${getMethodColor(tab.method)}`}>
               {tab.method}
             </span>
             {renamingTabId === tab.id ? (
@@ -164,12 +164,12 @@ export default function TabsBar({
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="text-sm px-1 py-0.5 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 w-20 md:w-[100px] max-w-[100px] md:max-w-[120px]"
+                className="text-xs px-1 py-0.5 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 w-20 md:w-[100px] max-w-[100px] md:max-w-[120px]"
                 autoFocus
               />
             ) : (
               <span
-                className="text-sm truncate min-w-0 flex-1"
+                className="text-xs truncate min-w-0 flex-1"
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   handleStartRename(tab.id, tab.name || 'Untitled');
@@ -208,21 +208,21 @@ export default function TabsBar({
       <div className="flex items-center flex-shrink-0 gap-1 px-2" style={{ transition: 'none' }}>
         <button
           onClick={onImportCurl}
-          className="p-2 hover:bg-accent rounded"
+          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-md transition-colors"
           style={{ transition: 'none' }}
           title="Import from cURL"
         >
-          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
           </svg>
         </button>
         <button
           onClick={onNewTab}
-          className="p-2 hover:bg-accent rounded"
+          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-md transition-colors"
           style={{ transition: 'none' }}
           title="New Tab"
         >
-          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
