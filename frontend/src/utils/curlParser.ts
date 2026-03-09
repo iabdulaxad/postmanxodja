@@ -153,8 +153,8 @@ export function generateCurl(opts: {
 }): string {
   const parts: string[] = ['curl'];
 
-  // Method (skip -X for GET since it's the default)
-  if (opts.method && opts.method !== 'GET') {
+  // Always include the method explicitly for clarity
+  if (opts.method) {
     parts.push(`-X ${opts.method}`);
   }
 
