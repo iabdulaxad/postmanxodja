@@ -290,7 +290,7 @@ export default function RequestBuilder({
         </div>
       )}
       <div className="mb-3 md:mb-6 space-y-2 md:space-y-0 md:flex md:gap-3 md:items-center">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center md:flex-1 md:min-w-0">
           <select
             value={method}
             onChange={(e) => {
