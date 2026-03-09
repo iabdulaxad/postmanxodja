@@ -573,8 +573,8 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     <span
                       className="text-xs font-medium px-1.5 py-0.5 rounded flex-shrink-0"
                       style={{
-                        color: 'var(--primary)',
-                        backgroundColor: 'var(--accent)',
+                        color: getStatusCodeColor(resp.code).color,
+                        backgroundColor: getStatusCodeColor(resp.code).bg,
                       }}
                     >
                       {resp.code}
@@ -691,8 +691,21 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
     return null;
   };
 
-  const getMethodColor = (_method: string) => {
-    return 'var(--primary)';
+  const getMethodColor = (method: string) => {
+    const colors: Record<string, string> = {
+      GET: '#16a34a',
+      POST: '#2563eb',
+      PUT: '#ca8a04',
+      DELETE: '#dc2626',
+      PATCH: '#0d9488',
+    };
+    return colors[method] || 'var(--primary)';
+  };
+
+  const getStatusCodeColor = (code: number) => {
+    if (code >= 200 && code < 300) return { color: '#16a34a', bg: 'rgba(22, 163, 74, 0.1)' };
+    if (code >= 300 && code < 400) return { color: '#ca8a04', bg: 'rgba(202, 138, 4, 0.1)' };
+    return { color: '#dc2626', bg: 'rgba(220, 38, 38, 0.1)' };
   };
 
   // Recursively filter items that match the search query

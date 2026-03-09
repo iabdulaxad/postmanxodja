@@ -255,8 +255,10 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
     );
   }
 
-  const getStatusColor = (_status: number) => {
-    return 'var(--primary)';
+  const getStatusColor = (status: number) => {
+    if (status >= 200 && status < 300) return '#16a34a'; // green-600
+    if (status >= 300 && status < 400) return '#ca8a04'; // yellow-600
+    return '#dc2626'; // red-600
   };
 
   const getStatusText = (status: number) => {
@@ -307,7 +309,11 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
               className="font-bold text-base px-3 py-1 rounded"
               style={{
                 color: getStatusColor(response.status),
-                backgroundColor: 'var(--accent)'
+                backgroundColor: response.status >= 200 && response.status < 300
+                  ? 'rgba(22, 163, 74, 0.1)'
+                  : response.status >= 300 && response.status < 400
+                    ? 'rgba(202, 138, 4, 0.1)'
+                    : 'rgba(220, 38, 38, 0.1)'
               }}
             >
               {response.status_text || `${response.status} ${getStatusText(response.status)}`}
