@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { executeRequest } from '../services/api';
 import VariableInput from './VariableInput';
 import JsonTreeEditor from './JsonTreeEditor';
+import { SaveButton } from './ui/save-button';
 import { parseCurl, generateCurl } from '../utils/curlParser';
 import type { ExecuteRequest, ExecuteResponse, Environment, RequestTab, BodyType, FormDataItem, SentRequest } from '../types';
 
@@ -16,7 +17,7 @@ interface Props {
   initialName?: string;
   onUpdate?: (updates: Partial<RequestTab>) => void;
   hasCollectionSource?: boolean;
-  onSaveToCollection?: () => void;
+  onSaveToCollection?: () => Promise<void> | void;
 }
 
 export default function RequestBuilder({
@@ -29,7 +30,6 @@ export default function RequestBuilder({
   initialQueryParams = {},
   initialName = 'Untitled',
   onUpdate,
-  hasCollectionSource = false,
   onSaveToCollection,
 }: Props) {
   const [method, setMethod] = useState(initialMethod);
@@ -403,18 +403,15 @@ export default function RequestBuilder({
           >
             {curlCopied ? 'Copied!' : 'cURL'}
           </button>
-          <button
-            onClick={() => {
+          <SaveButton
+            text={{ idle: "Save", saving: "Saving...", saved: "Saved!" }}
+            onSave={async () => {
               notifyUpdate({});
               if (onSaveToCollection) {
-                onSaveToCollection();
+                await onSaveToCollection();
               }
             }}
-            className="px-3 md:px-4 py-2 rounded-lg shadow-sm font-medium text-sm transition-colors duration-150 bg-blue-500 hover:bg-blue-600 text-white"
-            title={hasCollectionSource ? "Save to collection" : "Save to collection"}
-          >
-            Save
-          </button>
+          />
         </div>
       </div>
 
