@@ -67,6 +67,17 @@ export const updateCollection = async (teamId: number, id: number, data: { raw_j
   return response.data;
 };
 
+export const setCollectionEnvironment = async (
+  teamId: number,
+  collectionId: number,
+  environmentId: number | null
+): Promise<Collection> => {
+  const response = await api.patch(`/teams/${teamId}/collections/${collectionId}/environment`, {
+    environment_id: environmentId,
+  });
+  return response.data;
+};
+
 export const exportCollection = async (teamId: number, id: number, collectionName: string): Promise<void> => {
   try {
     const response = await api.get(`/teams/${teamId}/collections/${id}/export`, {

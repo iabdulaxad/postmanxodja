@@ -13,7 +13,7 @@ import CollectionSelector from '../components/CollectionSelector';
 import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
 import { useTeam } from '../contexts/TeamContext';
-import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection } from '../services/api';
+import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment } from '../services/api';
 import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
 
 // Helper to generate unique IDs
@@ -66,6 +66,8 @@ export default function DashboardPage() {
     message: '',
     onConfirm: () => {},
   });
+  // Map of collectionId -> environmentId (persisted per-collection env selection)
+  const [collectionEnvMap, setCollectionEnvMap] = useState<Map<number, number | null>>(new Map());
   const { currentTeam, isLoading } = useTeam();
 
   // Get current active tab
@@ -122,8 +124,57 @@ export default function DashboardPage() {
     }
   };
 
+  // Load collection-environment mappings when team changes
+  const loadCollectionEnvMap = useCallback(async () => {
+    if (!currentTeam) return;
+    try {
+      const collections = await getCollections(currentTeam.id);
+      const map = new Map<number, number | null>();
+      for (const col of collections) {
+        if (col.environment_id !== undefined) {
+          map.set(col.id, col.environment_id ?? null);
+        }
+      }
+      setCollectionEnvMap(map);
+    } catch (err) {
+      console.error('Failed to load collection env map:', err);
+    }
+  }, [currentTeam]);
+
+  useEffect(() => {
+    if (currentTeam) {
+      loadCollectionEnvMap();
+    } else {
+      setCollectionEnvMap(new Map());
+    }
+  }, [currentTeam?.id]);
+
+  // Compute initialEnvId for the active tab based on its collection
+  const initialEnvId = activeTab?.collectionId
+    ? collectionEnvMap.get(activeTab.collectionId) ?? undefined
+    : undefined;
+
+  // Handle environment change for a collection
+  const handleCollectionEnvChange = useCallback(async (envId: number | undefined) => {
+    if (!currentTeam || !activeTab?.collectionId) return;
+    const environmentId = envId ?? null;
+    try {
+      await setCollectionEnvironment(currentTeam.id, activeTab.collectionId, environmentId);
+      setCollectionEnvMap(prev => {
+        const next = new Map(prev);
+        next.set(activeTab.collectionId!, environmentId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to save collection environment:', err);
+    }
+  }, [currentTeam, activeTab?.collectionId]);
+
   const handleImportSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
+    // Reload environments and collection-env map in case import created a new environment
+    loadEnvironments();
+    loadCollectionEnvMap();
   };
 
   const handleUCodeImport = useCallback(async (collectionJSON: string) => {
@@ -131,10 +182,12 @@ export default function DashboardPage() {
     try {
       await importCollection(currentTeam.id, collectionJSON);
       setRefreshTrigger(prev => prev + 1);
+      loadEnvironments();
+      loadCollectionEnvMap();
     } catch (err) {
       console.error('Failed to import UCode collection:', err);
     }
-  }, [currentTeam]);
+  }, [currentTeam, loadCollectionEnvMap]);
 
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(prev => !prev);
@@ -890,6 +943,8 @@ export default function DashboardPage() {
                 initialQueryParams={activeTab?.queryParams || {}}
                 initialName={activeTab?.name || 'Untitled'}
                 environments={environments}
+                initialEnvId={initialEnvId}
+                onEnvironmentChange={activeTab?.collectionId ? handleCollectionEnvChange : undefined}
                 onResponse={handleResponse}
                 onUpdate={handleTabUpdate}
                 hasCollectionSource={!!activeTab?.collectionId}

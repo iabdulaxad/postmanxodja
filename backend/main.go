@@ -114,6 +114,7 @@ func main() {
 			teamApi.GET("/collections/:id", handlers.GetCollection)
 			teamApi.GET("/collections/:id/export", handlers.ExportCollection)
 			teamApi.PUT("/collections/:id", handlers.UpdateCollection)
+			teamApi.PATCH("/collections/:id/environment", handlers.SetCollectionEnvironment)
 			teamApi.DELETE("/collections/:id", handlers.DeleteCollection)
 
 			// Team environments

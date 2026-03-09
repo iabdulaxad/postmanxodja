@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"postmanxodja/database"
 	"postmanxodja/models"
@@ -74,6 +75,24 @@ func ImportCollection(c *gin.Context) {
 		TeamID:      &teamID,
 	}
 
+	// If collection has variables, create an environment from them
+	if len(collection.Variable) > 0 {
+		variables := make(models.Variables)
+		for _, v := range collection.Variable {
+			variables[v.Key] = v.Value
+		}
+
+		env := models.Environment{
+			Name:      name + " Environment",
+			Variables: variables,
+			TeamID:    &teamID,
+		}
+
+		if err := database.GetDB().Create(&env).Error; err == nil {
+			dbCollection.EnvironmentID = &env.ID
+		}
+	}
+
 	if err := database.GetDB().Create(&dbCollection).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save collection"})
 		return
@@ -120,12 +139,13 @@ func GetCollection(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":          collection.ID,
-		"name":        collection.Name,
-		"description": collection.Description,
-		"team_id":     collection.TeamID,
-		"created_at":  collection.CreatedAt,
-		"collection":  parsed,
+		"id":             collection.ID,
+		"name":           collection.Name,
+		"description":    collection.Description,
+		"team_id":        collection.TeamID,
+		"environment_id": collection.EnvironmentID,
+		"created_at":     collection.CreatedAt,
+		"collection":     parsed,
 	})
 }
 
@@ -228,6 +248,32 @@ func ExportCollection(c *gin.Context) {
 		return
 	}
 
+	exportJSON := collection.RawJSON
+
+	// If collection has a linked environment, embed its variables
+	if collection.EnvironmentID != nil {
+		var env models.Environment
+		if err := database.GetDB().Where("id = ?", *collection.EnvironmentID).First(&env).Error; err == nil {
+			parsed, err := services.ParsePostmanCollection(exportJSON)
+			if err == nil {
+				vars := make([]models.PostmanVariable, 0, len(env.Variables))
+				for key, value := range env.Variables {
+					vars = append(vars, models.PostmanVariable{
+						Key:   key,
+						Value: value,
+						Type:  "default",
+					})
+				}
+				parsed.Variable = vars
+
+				updatedJSON, err := json.MarshalIndent(parsed, "", "  ")
+				if err == nil {
+					exportJSON = string(updatedJSON)
+				}
+			}
+		}
+	}
+
 	// Sanitize filename - remove special characters
 	filename := collection.Name
 	for _, char := range []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"} {
@@ -237,5 +283,47 @@ func ExportCollection(c *gin.Context) {
 	// Set headers for file download
 	c.Header("Content-Disposition", "attachment; filename=\""+filename+".postman_collection.json\"")
 	c.Header("Content-Type", "application/json")
-	c.String(http.StatusOK, collection.RawJSON)
+	c.String(http.StatusOK, exportJSON)
+}
+
+// SetCollectionEnvironment links or unlinks an environment to a collection
+func SetCollectionEnvironment(c *gin.Context) {
+	teamID := c.GetUint("team_id")
+	id := c.Param("id")
+	collectionID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid collection ID"})
+		return
+	}
+
+	var req struct {
+		EnvironmentID *uint `json:"environment_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate environment belongs to same team if non-null
+	if req.EnvironmentID != nil {
+		var env models.Environment
+		if err := database.GetDB().Where("id = ? AND team_id = ?", *req.EnvironmentID, teamID).First(&env).Error; err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Environment not found"})
+			return
+		}
+	}
+
+	var collection models.Collection
+	if err := database.GetDB().Where("id = ? AND team_id = ?", collectionID, teamID).First(&collection).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Collection not found"})
+		return
+	}
+
+	collection.EnvironmentID = req.EnvironmentID
+	if err := database.GetDB().Save(&collection).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update collection"})
+		return
+	}
+
+	c.JSON(http.StatusOK, collection)
 }

@@ -15,7 +15,9 @@ interface Props {
   initialBody?: string;
   initialQueryParams?: Record<string, string>;
   initialName?: string;
+  initialEnvId?: number;
   onUpdate?: (updates: Partial<RequestTab>) => void;
+  onEnvironmentChange?: (envId: number | undefined) => void;
   hasCollectionSource?: boolean;
   onSaveToCollection?: () => Promise<void> | void;
 }
@@ -29,7 +31,9 @@ export default function RequestBuilder({
   initialBody = '',
   initialQueryParams = {},
   initialName = 'Untitled',
+  initialEnvId,
   onUpdate,
+  onEnvironmentChange,
   onSaveToCollection,
 }: Props) {
   const [method, setMethod] = useState(initialMethod);
@@ -43,7 +47,7 @@ export default function RequestBuilder({
   const [queryParams, setQueryParams] = useState<Array<{ key: string; value: string }>>(() =>
     Object.entries(initialQueryParams).map(([key, value]) => ({ key, value }))
   );
-  const [selectedEnvId, setSelectedEnvId] = useState<number | undefined>();
+  const [selectedEnvId, setSelectedEnvId] = useState<number | undefined>(initialEnvId);
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body'>('params');
   const [curlCopied, setCurlCopied] = useState(false);
@@ -363,7 +367,11 @@ export default function RequestBuilder({
         <div className="flex gap-2 items-center flex-wrap min-w-0">
           <select
             value={selectedEnvId || ''}
-            onChange={(e) => setSelectedEnvId(e.target.value ? Number(e.target.value) : undefined)}
+            onChange={(e) => {
+              const newEnvId = e.target.value ? Number(e.target.value) : undefined;
+              setSelectedEnvId(newEnvId);
+              onEnvironmentChange?.(newEnvId);
+            }}
             className="border border-border rounded-lg px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground shadow-sm flex-1 md:flex-initial min-w-0 max-w-[140px] sm:max-w-none"
           >
             <option value="">No Environment</option>

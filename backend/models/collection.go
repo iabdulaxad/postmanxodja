@@ -4,12 +4,13 @@ import "time"
 
 // Collection represents a stored Postman collection in database
 type Collection struct {
-	ID          uint      `json:"id" gorm:"primaryKey"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	RawJSON     string    `json:"raw_json" gorm:"type:text"`
-	TeamID      *uint     `json:"team_id" gorm:"index"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	Name          string    `json:"name"`
+	Description   string    `json:"description"`
+	RawJSON       string    `json:"raw_json" gorm:"type:text"`
+	EnvironmentID *uint     `json:"environment_id" gorm:"index"`
+	TeamID        *uint     `json:"team_id" gorm:"index"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 // PostmanCollection represents Postman Collection v2.1 format

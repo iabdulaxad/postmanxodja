@@ -59,6 +59,7 @@ export interface Collection {
   name: string;
   description: string;
   raw_json?: string;
+  environment_id?: number | null;
   team_id?: number;
   created_at: string;
 }
