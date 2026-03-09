@@ -315,7 +315,17 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-xs sm:text-sm font-medium text-muted-foreground">Time:</span>
-            <span className="font-semibold text-sm sm:text-base text-foreground">{response.time}ms</span>
+            <span
+              className={`font-semibold text-sm sm:text-base px-2 py-0.5 rounded ${
+                response.time < 200
+                  ? 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-900/30'
+                  : response.time < 1000
+                    ? 'text-yellow-700 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30'
+                    : 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-900/30'
+              }`}
+            >
+              {response.time}ms
+            </span>
           </div>
           {/* Save Response Button */}
           {canSaveResponse && onSaveResponse && (

@@ -106,7 +106,13 @@ export default function InvitesPage() {
               <div key={invite.id} className="bg-card rounded-lg shadow p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-foreground">{invite.team?.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-foreground">{invite.team?.name}</h3>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                        Pending
+                      </span>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Invited by {invite.inviter?.name || invite.inviter?.email}
                     </p>

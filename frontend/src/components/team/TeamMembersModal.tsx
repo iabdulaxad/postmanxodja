@@ -122,12 +122,15 @@ export default function TeamMembersModal({
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
+                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                             member.role === 'owner'
-                              ? 'bg-primary/10 text-primary'
-                              : 'bg-accent text-muted-foreground'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           }`}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            member.role === 'owner' ? 'bg-purple-500' : 'bg-green-500'
+                          }`}></span>
                           {member.role}
                         </span>
                         {isOwner && member.role !== 'owner' && member.user_id !== user?.id && (
@@ -186,7 +189,10 @@ export default function TeamMembersModal({
                             </div>
                             <div>
                               <p className="font-medium text-foreground">{invite.invitee_email}</p>
-                              <p className="text-sm text-muted-foreground">Invite pending</p>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                Pending
+                              </span>
                             </div>
                           </div>
                         </div>
