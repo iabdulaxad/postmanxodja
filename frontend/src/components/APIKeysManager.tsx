@@ -292,7 +292,7 @@ export default function APIKeysManager() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowCreateModal(false)} />
+          <div className="fixed inset-0 bg-slate-900/30" onClick={() => setShowCreateModal(false)} />
           <div className="relative bg-card rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-foreground mb-4">Create API Key</h3>
             <div className="space-y-4">

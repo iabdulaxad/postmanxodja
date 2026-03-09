@@ -89,7 +89,7 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/30" onClick={onClose} />
       <div className="relative bg-card w-full h-full md:h-auto md:rounded-xl md:max-w-lg md:mx-4 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-primary/5">

@@ -294,7 +294,7 @@ export default function CollectionSelector({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={handleCancel} />
+      <div className="fixed inset-0 bg-slate-900/30" onClick={handleCancel} />
       <div className="relative bg-card shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:mx-4 md:max-h-[80vh] flex flex-col">
         <div className="p-6 border-b border-border">
           <h3 className="text-lg font-semibold text-foreground">Select Collection or Folder</h3>

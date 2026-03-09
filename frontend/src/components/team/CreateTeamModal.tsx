@@ -33,7 +33,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSubmit }: CreateTea
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
       <div className="relative bg-card shadow-xl w-full md:rounded-xl md:max-w-md md:mx-4 p-6">
         <h2 className="text-xl font-semibold text-foreground mb-4">Create New Team</h2>
 

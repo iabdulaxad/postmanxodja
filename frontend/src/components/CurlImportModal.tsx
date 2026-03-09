@@ -52,7 +52,7 @@ export default function CurlImportModal({ isOpen, onClose, onImport }: CurlImpor
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
+      <div className="fixed inset-0 bg-slate-900/30" onClick={handleClose} />
       <div className="relative bg-card shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:mx-4">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">

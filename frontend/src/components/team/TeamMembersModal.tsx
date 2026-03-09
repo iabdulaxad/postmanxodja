@@ -71,7 +71,7 @@ export default function TeamMembersModal({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+        <div className="fixed inset-0 bg-slate-900/30" onClick={onClose} />
         <div className="relative bg-card shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-lg md:mx-4 md:max-h-[80vh] flex flex-col">
           {/* Header */}
           <div className="px-6 py-4 border-b border-border">

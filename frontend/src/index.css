@@ -244,9 +244,9 @@ body {
 }
 
 .vi-var-found {
-  background: rgba(255, 237, 213, 0.9);
-  color: #c2410c;
-  outline-color: #fdba74;
+  background: rgba(219, 234, 254, 0.9);
+  color: #1d4ed8;
+  outline-color: #93c5fd;
 }
 
 .vi-var-missing {
@@ -256,9 +256,9 @@ body {
 }
 
 .dark .vi-var-found {
-  background: rgba(194, 65, 12, 0.25);
-  color: #fb923c;
-  outline-color: rgba(251, 146, 60, 0.4);
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  outline-color: rgba(147, 197, 253, 0.4);
 }
 
 .dark .vi-var-missing {
@@ -289,11 +289,11 @@ body {
 
 /* Numbers */
 .vi-json-number {
-  color: #d97706;
+  color: #2563eb;
 }
 
 .dark .vi-json-number {
-  color: #fbbf24;
+  color: #93c5fd;
 }
 
 /* Booleans (true / false) */
@@ -318,7 +318,7 @@ body {
 /* ── Mobile Sidebar Drawer ── */
 
 .mobile-sidebar-backdrop {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(100, 116, 139, 0.3);
   animation: fadeIn 0.2s ease-out;
 }
 
