@@ -36,7 +36,7 @@ export function SaveButton({
         particleCount: 60,
         spread: 55,
         origin: { y: 0.7 },
-        colors: ["#3b82f6", "#60a5fa", "#93c5fd", "#2563eb", "#1d4ed8"],
+        colors: ["#c96442", "#d97757", "#b05730", "#e9a589", "#9c87f5"],
         shapes: ["circle"],
       })
       setTimeout(() => {
@@ -62,9 +62,9 @@ export function SaveButton({
       className={[
         "px-3 md:px-4 py-2 rounded-lg shadow-sm font-medium text-sm transition-colors duration-150 flex items-center gap-1.5",
         status === "idle"
-          ? "bg-blue-500 hover:bg-blue-600 text-white"
+          ? "bg-primary hover:bg-primary/90 text-primary-foreground"
           : status === "saving"
-            ? "bg-blue-400 text-white cursor-not-allowed"
+            ? "bg-primary/80 text-primary-foreground cursor-not-allowed"
             : "bg-green-500 text-white",
         className,
       ].filter(Boolean).join(" ")}

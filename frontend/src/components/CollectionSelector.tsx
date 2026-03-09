@@ -149,10 +149,10 @@ export default function CollectionSelector({
     if (isARequest) {
       return (
         <div key={pathKey} style={{ paddingLeft }}>
-          <div className="py-1 px-3 flex items-center gap-2 text-gray-400">
+          <div className="py-1 px-3 flex items-center gap-2 text-muted-foreground">
             <span className="text-xs">📄</span>
             <span className="text-sm truncate">{itemName}</span>
-            <span className="text-xs text-gray-400 ml-2">(request)</span>
+            <span className="text-xs text-muted-foreground ml-2">(request)</span>
           </div>
         </div>
       );
@@ -176,7 +176,7 @@ export default function CollectionSelector({
             }}
           >
             {isAFolder && (
-              <span className="text-gray-400 text-xs w-4">
+              <span className="text-muted-foreground text-xs w-4">
                 {isExpanded ? '▼' : '▶'}
               </span>
             )}
@@ -191,11 +191,11 @@ export default function CollectionSelector({
                 </svg>
               )}
             </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+            <span className="text-sm font-medium text-muted-foreground truncate">
               {itemName}
             </span>
             {isAFolder && (
-              <span className="text-xs text-gray-400 ml-1">
+              <span className="text-xs text-muted-foreground ml-1">
                 ({item.item?.length || 0} items)
               </span>
             )}
@@ -205,7 +205,7 @@ export default function CollectionSelector({
               e.stopPropagation();
               selectNode(collectionId, currentPath, itemName, depth === 0);
             }}
-            className="ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors whitespace-nowrap"
+            className="ml-2 px-3 py-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground rounded transition-colors whitespace-nowrap"
           >
             Select {depth === 0 ? 'Collection' : 'Folder'}
           </button>
@@ -233,7 +233,7 @@ export default function CollectionSelector({
     const isExpanded = expandedNodes.has(pathKey);
 
     return (
-      <div key={collection.id} className="border-b border-gray-200 last:border-b-0">
+      <div key={collection.id} className="border-b border-border last:border-b-0">
         {/* Collection header */}
         <div
           className={`py-3 px-4 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer ${
@@ -244,17 +244,17 @@ export default function CollectionSelector({
             className="flex items-center gap-2"
             onClick={() => toggleNode(pathKey)}
           >
-            <span className="text-gray-400 text-xs w-4">
+            <span className="text-muted-foreground text-xs w-4">
               {isExpanded ? '▼' : '▶'}
             </span>
             <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
               <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
             </svg>
             <div className="flex flex-col">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">
+              <span className="font-semibold text-foreground">
                 {collectionName}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 Collection • {collectionItems.length} items
               </span>
             </div>
@@ -264,7 +264,7 @@ export default function CollectionSelector({
               e.stopPropagation();
               selectNode(collection.id, [], collectionName, true);
             }}
-            className="px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+            className="px-3 py-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground rounded transition-colors"
           >
             Select Collection
           </button>
@@ -272,9 +272,9 @@ export default function CollectionSelector({
 
         {/* Collection contents (folders and requests) */}
         {isExpanded && (
-          <div className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700">
+          <div className="bg-accent/50 border-t border-border">
             {collectionItems.length === 0 ? (
-              <div className="py-3 px-4 text-sm text-gray-500 text-center italic">
+              <div className="py-3 px-4 text-sm text-muted-foreground text-center italic">
                 Empty collection
               </div>
             ) : (
@@ -295,10 +295,10 @@ export default function CollectionSelector({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={handleCancel} />
-      <div className="relative bg-white dark:bg-gray-800 shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:mx-4 md:max-h-[80vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Select Collection or Folder</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+      <div className="relative bg-card shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:mx-4 md:max-h-[80vh] flex flex-col">
+        <div className="p-6 border-b border-border">
+          <h3 className="text-lg font-semibold text-foreground">Select Collection or Folder</h3>
+          <p className="text-sm text-muted-foreground mt-1">
             Choose where to save this request. You can select a collection or any folder within it.
           </p>
         </div>
@@ -307,7 +307,7 @@ export default function CollectionSelector({
           {loading ? (
             <div className="p-8 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="mt-2 text-gray-500">Loading collections...</p>
+              <p className="mt-2 text-muted-foreground">Loading collections...</p>
             </div>
           ) : error ? (
             <div className="p-8 text-center">
@@ -315,26 +315,26 @@ export default function CollectionSelector({
               <p className="text-red-600">{error}</p>
               <button
                 onClick={loadCollections}
-                className="mt-3 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="mt-3 px-4 py-2 text-sm bg-muted hover:bg-accent rounded-lg transition-colors"
               >
                 Retry
               </button>
             </div>
           ) : collections.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted-foreground">
               <p>No collections available. Create a collection first.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-border">
               {collections.map(renderCollectionTree)}
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+        <div className="p-4 border-t border-border bg-accent/50">
           {selectedNode && (
             <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="text-sm text-muted-foreground">
                 <span className="font-medium">Selected: </span>
                 <span className="text-blue-600">
                   {selectedNode.isCollection ? '📁 ' : '📂 '}
@@ -349,17 +349,17 @@ export default function CollectionSelector({
           <div className="flex justify-end gap-3">
             <button
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-card hover:bg-accent border border-border rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleConfirm}
               disabled={!selectedNode}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium text-primary-foreground rounded-lg transition-colors ${
                 selectedNode
-                  ? 'bg-blue-500 hover:bg-blue-600'
-                  : 'bg-gray-400 cursor-not-allowed'
+                  ? 'bg-primary hover:bg-primary/90'
+                  : 'bg-muted-foreground cursor-not-allowed'
               }`}
             >
               {selectedNode?.isCollection ? 'Save to Collection' : 'Save to Folder'}

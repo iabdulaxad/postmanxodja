@@ -90,9 +90,9 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 w-full h-full md:h-auto md:rounded-xl md:max-w-lg md:mx-4 shadow-2xl overflow-hidden">
+      <div className="relative bg-card w-full h-full md:h-auto md:rounded-xl md:max-w-lg md:mx-4 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 dark:from-emerald-500/20 dark:to-cyan-500/20">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 dark:from-emerald-500/20 dark:to-cyan-500/20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,15 +101,15 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Settings</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <h2 className="text-lg font-semibold text-foreground">AI Settings</h2>
+              <p className="text-sm text-muted-foreground">
                 {currentTeam?.name} - OpenAI Integration
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -137,7 +137,7 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
 
               {/* API Key */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                   OpenAI API Key {!settings?.has_api_key && <span className="text-red-500">*</span>}
                 </label>
                 <input
@@ -145,9 +145,9 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={settings?.has_api_key ? 'Enter new key to update (leave empty to keep current)' : 'sk-...'}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none font-mono"
+                  className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none font-mono"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Your key is stored encrypted and never shared. Get one at{' '}
                   <a
                     href="https://platform.openai.com/api-keys"
@@ -162,7 +162,7 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
 
               {/* Model Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                   Model
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -173,15 +173,15 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
                       className={`p-2.5 rounded-lg border text-left transition-all ${
                         model === m.value
                           ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 ring-2 ring-emerald-500/20'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                          : 'border-border hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
                       <div className={`text-sm font-medium ${
-                        model === m.value ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-300'
+                        model === m.value ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
                       }`}>
                         {m.label}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{m.description}</div>
+                      <div className="text-xs text-muted-foreground">{m.description}</div>
                     </button>
                   ))}
                 </div>
@@ -208,7 +208,7 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
           <div>
             {settings?.has_api_key && (
               <button
@@ -223,7 +223,7 @@ export default function AISettingsModal({ isOpen, onClose }: Props) {
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg"
             >
               Cancel
             </button>

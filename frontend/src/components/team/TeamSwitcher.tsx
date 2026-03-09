@@ -20,13 +20,13 @@ export default function TeamSwitcher({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-card border border-border rounded-lg hover:bg-accent transition-colors"
       >
-        <span className="font-medium text-xs sm:text-sm text-gray-700 dark:text-gray-200 truncate max-w-[70px] sm:max-w-[100px] md:max-w-[150px]">
+        <span className="font-medium text-xs sm:text-sm text-foreground truncate max-w-[70px] sm:max-w-[100px] md:max-w-[150px]">
           {currentTeam?.name || 'Select Team'}
         </span>
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -41,7 +41,7 @@ export default function TeamSwitcher({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+          <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-lg border border-border z-20">
             <div className="py-1">
               {teams.map((team) => (
                 <button
@@ -50,8 +50,8 @@ export default function TeamSwitcher({
                     onTeamChange(team);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${
-                    currentTeam?.id === team.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center justify-between ${
+                    currentTeam?.id === team.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-foreground'
                   }`}
                 >
                   <span className="truncate">{team.name}</span>
@@ -67,7 +67,7 @@ export default function TeamSwitcher({
                 </button>
               ))}
             </div>
-            <div className="border-t border-gray-200 dark:border-gray-700 py-1">
+            <div className="border-t border-border py-1">
               <button
                 onClick={() => {
                   onCreateTeam();

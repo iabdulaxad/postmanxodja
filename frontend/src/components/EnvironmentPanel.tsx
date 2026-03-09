@@ -88,22 +88,22 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
 
   if (!currentTeam) {
     return (
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Select a team to manage environments</p>
+      <div className="p-4 border-t border-border bg-card">
+        <p className="text-sm text-muted-foreground">Select a team to manage environments</p>
       </div>
     );
   }
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="border-t border-border bg-card">
       <div
-        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+        className="flex justify-between items-center p-4 cursor-pointer hover:bg-accent"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          <span className="text-gray-400 text-xs">{isExpanded ? '▼' : '▶'}</span>
+        <h3 className="font-semibold text-foreground flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">{isExpanded ? '▼' : '▶'}</span>
           Environments
-          <span className="text-xs text-gray-400 font-normal">({environments.length})</span>
+          <span className="text-xs text-muted-foreground font-normal">({environments.length})</span>
         </h3>
         {!showForm && isExpanded && (
           <button
@@ -116,7 +116,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
       </div>
 
       {isExpanded && showForm && (
-        <div className="mx-4 mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+        <div className="mx-4 mb-4 p-4 bg-muted rounded-lg border border-border">
           <div className="p-3 mb-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 rounded-r-lg">
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
               Define variables here, then use them in requests with <code className="bg-white dark:bg-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">{'{{variableName}}'}</code>
@@ -127,10 +127,10 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             placeholder="Environment name"
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 mb-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-600 dark:text-gray-100"
+            className="w-full border border-border rounded-lg px-3 py-2 mb-4 text-sm focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
           />
 
-          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 text-sm">Variables</h4>
+          <h4 className="font-semibold text-foreground mb-3 text-sm">Variables</h4>
           <div className="max-h-48 overflow-y-auto">
             {formVariables.map((variable, index) => (
               <div key={index} className="flex gap-2 mb-2">
@@ -139,7 +139,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
                   value={variable.key}
                   onChange={(e) => updateVariable(index, 'key', e.target.value)}
                   placeholder="Key"
-                  className="w-1/3 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-600 dark:text-gray-100"
+                  className="w-1/3 min-w-0 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
                 />
                 <input
                   type="text"
@@ -147,7 +147,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
                   onChange={(e) => updateVariable(index, 'value', e.target.value)}
                   placeholder="Value"
                   title={variable.value}
-                  className="flex-1 min-w-0 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none truncate bg-white dark:bg-gray-600 dark:text-gray-100"
+                  className="flex-1 min-w-0 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-primary outline-none truncate bg-card text-foreground"
                 />
                 <button
                   onClick={() => removeVariable(index)}
@@ -160,7 +160,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           </div>
           <button
             onClick={addVariable}
-            className="mb-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow-sm "
+            className="mb-4 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm "
           >
             Add Variable
           </button>
@@ -168,7 +168,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           <div className="flex gap-2">
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm shadow-sm "
+              className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm "
             >
               Save
             </button>
@@ -187,18 +187,18 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           {environments.map(env => (
             <div
               key={env.id}
-              className="p-3 mb-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-600 "
+              className="p-3 mb-2 bg-muted border border-border rounded-lg flex justify-between items-center hover:bg-accent "
             >
               <div className="min-w-0 flex-1 mr-2">
-                <div className="font-semibold text-gray-800 dark:text-gray-200 text-sm truncate">{env.name}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="font-semibold text-foreground text-sm truncate">{env.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {Object.keys(env.variables).length} variables
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <button
                   onClick={() => handleEdit(env)}
-                  className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded "
+                  className="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded "
                 >
                   Edit
                 </button>
@@ -212,7 +212,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
             </div>
           ))}
           {environments.length === 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">No environments yet</p>
+            <p className="text-sm text-muted-foreground text-center py-2">No environments yet</p>
           )}
         </div>
       )}

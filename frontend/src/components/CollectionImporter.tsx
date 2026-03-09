@@ -52,15 +52,15 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
 
   if (!currentTeam) {
     return (
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Select a team to manage collections</p>
+      <div className="p-4 border-b border-border bg-card">
+        <p className="text-sm text-muted-foreground">Select a team to manage collections</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="p-4 border-b border-border bg-card">
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreateModal(true)}
@@ -70,7 +70,7 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
                flex items-center justify-center gap-1
               ${loading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
               }
             `}
           >
@@ -86,7 +86,7 @@ export default function CollectionImporter({ onImportSuccess, onUCodeImport }: P
                flex items-center justify-center gap-1 cursor-pointer
               ${loading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600'
+                : 'bg-accent hover:bg-accent/80 text-foreground border border-border'
               }
             `}
           >

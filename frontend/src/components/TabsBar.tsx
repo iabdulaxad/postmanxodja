@@ -80,7 +80,7 @@ export default function TabsBar({
       DELETE: 'text-red-600',
       PATCH: 'text-teal-600',
     };
-    return colors[method] || 'text-gray-600';
+    return colors[method] || 'text-muted-foreground';
   };
 
   const handleStartRename = (tabId: string, currentName: string) => {
@@ -108,15 +108,15 @@ export default function TabsBar({
           display: none;
         }
       `}</style>
-      <div className="flex items-center bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 w-full min-w-0 flex-shrink-0" style={{ transition: 'none' }}>
+      <div className="flex items-center bg-card border-b border-border w-full min-w-0 flex-shrink-0" style={{ transition: 'none' }}>
         {canScrollLeft && (
           <button
             onClick={scrollLeft}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex-shrink-0"
+            className="p-2 hover:bg-accent rounded flex-shrink-0"
             style={{ transition: 'none' }}
             title="Scroll left"
           >
-            <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -141,8 +141,8 @@ export default function TabsBar({
               group flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-3 md:py-2.5 cursor-pointer font-semibold text-sm border-b-2
               min-w-[100px] sm:min-w-[120px] md:min-w-[140px] max-w-[180px] md:max-w-[220px] flex-shrink-0
               ${activeTabId === tab.id
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'border-primary text-primary bg-primary/10'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
               }
             `}
           >
@@ -164,7 +164,7 @@ export default function TabsBar({
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
-                className="text-sm px-1 py-0.5 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-0 w-20 md:w-[100px] max-w-[100px] md:max-w-[120px]"
+                className="text-sm px-1 py-0.5 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 w-20 md:w-[100px] max-w-[100px] md:max-w-[120px]"
                 autoFocus
               />
             ) : (
@@ -184,9 +184,9 @@ export default function TabsBar({
                 onTabClose(tab.id);
               }}
               style={{ transition: 'none' }}
-              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded flex-shrink-0"
+              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-0.5 hover:bg-muted rounded flex-shrink-0"
             >
-              <svg className="w-3 h-3 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </span>
@@ -196,11 +196,11 @@ export default function TabsBar({
       {canScrollRight && (
         <button
           onClick={scrollRight}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex-shrink-0"
+          className="p-2 hover:bg-accent rounded flex-shrink-0"
           style={{ transition: 'none' }}
           title="Scroll right"
         >
-          <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -208,21 +208,21 @@ export default function TabsBar({
       <div className="flex items-center flex-shrink-0 gap-1 px-2" style={{ transition: 'none' }}>
         <button
           onClick={onImportCurl}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          className="p-2 hover:bg-accent rounded"
           style={{ transition: 'none' }}
           title="Import from cURL"
         >
-          <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
           </svg>
         </button>
         <button
           onClick={onNewTab}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          className="p-2 hover:bg-accent rounded"
           style={{ transition: 'none' }}
           title="New Tab"
         >
-          <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>

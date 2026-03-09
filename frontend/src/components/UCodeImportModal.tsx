@@ -275,9 +275,9 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 shadow-2xl w-full h-full md:h-auto md:rounded-xl md:max-w-2xl md:mx-4 md:max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-card shadow-2xl w-full h-full md:h-auto md:rounded-xl md:max-w-2xl md:mx-4 md:max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between ${
+        <div className={`px-6 py-4 border-b border-border flex items-center justify-between ${
           aiEnabled
             ? 'bg-gradient-to-r from-purple-500/10 via-emerald-500/10 to-blue-500/10 dark:from-purple-500/20 dark:via-emerald-500/20 dark:to-blue-500/20'
             : 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 dark:from-purple-500/20 dark:to-blue-500/20'
@@ -299,10 +299,10 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-foreground">
                 Import from UCode {aiEnabled && <span className="text-emerald-500 text-sm ml-1">AI</span>}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {step === 'config' ? 'Enter your project details' :
                  step === 'ai-preview' ? `AI organized ${aiAnalysis?.table_count_essential || 0} essential tables` :
                  `${parsedData?.tables} tables found`}
@@ -311,7 +311,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
           </div>
           <button
             onClick={handleReset}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -332,11 +332,11 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-lg font-medium text-gray-900 dark:text-white">AI is analyzing your schema...</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-lg font-medium text-foreground">AI is analyzing your schema...</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   Grouping tables, identifying auth flows, filtering out noise
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Using {aiModel || 'GPT-4o Mini'} • This may take 10-30 seconds
                 </p>
               </div>
@@ -354,14 +354,14 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                         d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                     <div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Smart Import</span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Groups tables, identifies auth flows, skips noise</p>
+                      <span className="text-sm font-medium text-muted-foreground">AI Smart Import</span>
+                      <p className="text-xs text-muted-foreground">Groups tables, identifies auth flows, skips noise</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setAiEnabled(!aiEnabled)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      aiEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                      aiEnabled ? 'bg-emerald-500' : 'bg-muted'
                     }`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -373,7 +373,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
               {/* Project ID */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                   Project ID <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -381,13 +381,13 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   placeholder="e.g. 3323bfe2-b147-41fd-9d24-ca7c929d6abd"
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
+                  className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
                 />
               </div>
 
               {/* Environment ID */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                   Environment ID <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -395,7 +395,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                   value={environmentId}
                   onChange={(e) => setEnvironmentId(e.target.value)}
                   placeholder="e.g. fdb116b5-2833-49c8-adfd-0a8616d6c586"
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
+                  className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
                 />
               </div>
 
@@ -403,7 +403,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 <svg
                   className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
@@ -418,7 +418,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                 <div className="space-y-4 pl-4 border-l-2 border-purple-200 dark:border-purple-800">
                   {/* API Key */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                       API Key
                     </label>
                     <input
@@ -426,16 +426,16 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       placeholder="Your UCode API key (for generated requests)"
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
+                      className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       If provided, the API key will be embedded in generated requests
                     </p>
                   </div>
 
                   {/* Base URL */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                       Base URL
                     </label>
                     <input
@@ -443,7 +443,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                       value={baseUrl}
                       onChange={(e) => setBaseUrl(e.target.value)}
                       placeholder="https://api.admin.u-code.io"
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
+                      className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -451,16 +451,16 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
               {/* Divider with "or" */}
               <div className="flex items-center gap-3 pt-2">
-                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
-                <span className="text-xs text-gray-400 dark:text-gray-500">or</span>
-                <div className="flex-1 border-t border-gray-200 dark:border-gray-700" />
+                <div className="flex-1 border-t border-border" />
+                <span className="text-xs text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-border" />
               </div>
 
               {/* Paste DBML option */}
               <button
                 type="button"
                 onClick={() => setShowPaste(true)}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -473,7 +473,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
           {step === 'config' && showPaste && !aiLoading && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block text-sm font-medium text-muted-foreground">
                   Paste DBML Content
                 </label>
                 <button
@@ -488,7 +488,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                 onChange={(e) => setPastedDBML(e.target.value)}
                 placeholder={`Table users {\n  guid VARCHAR\n  name VARCHAR\n  email VARCHAR\n}\n\nTable orders {\n  guid VARCHAR\n  users_id UUID\n  total FLOAT\n}`}
                 rows={12}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono resize-none"
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-card text-foreground text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono resize-none"
               />
               {aiEnabled && (
                 <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -532,8 +532,8 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
               </div>
 
               {/* Description */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Generated for each table:</h4>
+              <div className="bg-background rounded-lg p-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Generated for each table:</h4>
                 <div className="grid grid-cols-3 gap-1.5 text-xs">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block w-11 text-center py-0.5 rounded text-white bg-green-500 font-bold">GET</span>
@@ -576,16 +576,16 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
               {/* Table list */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tables ({parsedData.tables}):</h4>
-                <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Tables ({parsedData.tables}):</h4>
+                <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
                   {parsedData.tableNames.map((name, i) => (
                     <div
                       key={name}
-                      className={`px-3 py-1.5 text-sm font-mono text-gray-700 dark:text-gray-300 ${
-                        i % 2 === 0 ? 'bg-gray-50 dark:bg-gray-700/30' : ''
+                      className={`px-3 py-1.5 text-sm font-mono text-muted-foreground ${
+                        i % 2 === 0 ? 'bg-background' : ''
                       }`}
                     >
-                      <span className="text-gray-400 dark:text-gray-500 mr-2 text-xs">{i + 1}.</span>
+                      <span className="text-muted-foreground mr-2 text-xs">{i + 1}.</span>
                       {name}
                     </div>
                   ))}
@@ -611,7 +611,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                   </svg>
                   <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">AI Analysis Complete</h4>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{aiAnalysis.project_summary}</p>
+                <p className="text-sm text-muted-foreground">{aiAnalysis.project_summary}</p>
               </div>
 
               {/* Stats */}
@@ -624,9 +624,9 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                   <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{aiAnalysis.table_count_essential}</div>
                   <div className="text-xs text-emerald-600/70 dark:text-emerald-400/70">Essential</div>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 text-center">
-                  <div className="text-xl font-bold text-gray-500 dark:text-gray-400">{aiAnalysis.table_count_skipped}</div>
-                  <div className="text-xs text-gray-500/70 dark:text-gray-400/70">Skipped</div>
+                <div className="bg-background rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold text-muted-foreground">{aiAnalysis.table_count_skipped}</div>
+                  <div className="text-xs text-muted-foreground">Skipped</div>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
                   <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{aiAnalysis.domains.length}</div>
@@ -637,7 +637,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
               {/* Auth Tables */}
               {aiAnalysis.auth_tables.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                     <span className="text-base">🔐</span> Auth Tables ({aiAnalysis.auth_tables.length})
                   </h4>
                   <div className="space-y-2">
@@ -647,7 +647,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                           <span className="font-mono text-sm text-amber-700 dark:text-amber-300">{auth.table_name}</span>
                           <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">{auth.auth_type}</span>
                         </div>
-                        <div className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1.5 text-xs text-muted-foreground">
                           Login fields: {auth.login_fields.join(', ')} {auth.has_roles && '• Has roles'}
                         </div>
                       </div>
@@ -658,28 +658,28 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
               {/* Domains */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Domains</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Domains</h4>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {aiAnalysis.domains.map((domain) => (
-                    <details key={domain.name} className="border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 text-sm">
+                    <details key={domain.name} className="border border-border rounded-lg">
+                      <summary className="px-3 py-2 cursor-pointer hover:bg-accent flex items-center gap-2 text-sm">
                         <span>{domain.icon}</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">{domain.name}</span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                        <span className="font-medium text-muted-foreground">{domain.name}</span>
+                        <span className="text-xs text-muted-foreground">
                           ({domain.tables.length} tables)
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{domain.description}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{domain.description}</span>
                       </summary>
-                      <div className="border-t border-gray-100 dark:border-gray-700">
+                      <div className="border-t border-border">
                         {domain.tables.map((t) => (
-                          <div key={t.name} className="px-4 py-1.5 text-xs font-mono text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                          <div key={t.name} className="px-4 py-1.5 text-xs font-mono text-muted-foreground flex items-center gap-2">
                             {t.essential ? (
                               <span className="text-emerald-500" title="Essential">⭐</span>
                             ) : (
-                              <span className="text-gray-400" title="Non-essential">○</span>
+                              <span className="text-muted-foreground" title="Non-essential">○</span>
                             )}
                             {t.name}
-                            <span className="text-gray-400 dark:text-gray-500 font-sans ml-auto">{t.purpose}</span>
+                            <span className="text-muted-foreground font-sans ml-auto">{t.purpose}</span>
                           </div>
                         ))}
                       </div>
@@ -690,14 +690,14 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
 
               {/* Skipped Tables */}
               {aiAnalysis.skip_tables.length > 0 && (
-                <details className="border border-gray-200 dark:border-gray-600 rounded-lg">
-                  <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 text-sm text-gray-500 dark:text-gray-400">
+                <details className="border border-border rounded-lg">
+                  <summary className="px-3 py-2 cursor-pointer hover:bg-accent text-sm text-muted-foreground">
                     Skipped tables ({aiAnalysis.skip_tables.length}) — click to expand
                   </summary>
-                  <div className="border-t border-gray-100 dark:border-gray-700 px-3 py-2">
+                  <div className="border-t border-border px-3 py-2">
                     <div className="flex flex-wrap gap-1.5">
                       {aiAnalysis.skip_tables.map((name) => (
-                        <span key={name} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded font-mono">
+                        <span key={name} className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded font-mono">
                           {name}
                         </span>
                       ))}
@@ -723,7 +723,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                         </button>
                         <button
                           onClick={() => setSelectedTables(new Set())}
-                          className="text-xs px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
+                          className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground hover:bg-accent"
                         >
                           Deselect All
                         </button>
@@ -731,7 +731,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                     </div>
                     {/* Search */}
                     <div className="relative">
-                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                       <input
@@ -739,7 +739,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                         placeholder="Search tables..."
                         value={tableSearch}
                         onChange={(e) => setTableSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded border border-indigo-200 dark:border-indigo-700 bg-card text-muted-foreground placeholder-gray-400 focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
                       />
                     </div>
                   </div>
@@ -757,7 +757,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                       const filtered = allTableNames.filter(n => n.toLowerCase().includes(query));
                       if (filtered.length === 0) {
                         return (
-                          <div className="px-3 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">
+                          <div className="px-3 py-4 text-xs text-muted-foreground text-center">
                             No tables match "{tableSearch}"
                           </div>
                         );
@@ -771,7 +771,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                           <label
                             key={name}
                             className={`flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/10 ${
-                              i % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                              i % 2 === 0 ? 'bg-card' : 'bg-background'
                             } ${!isChecked ? 'opacity-60' : ''}`}
                           >
                             <input
@@ -787,7 +787,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                               }}
                               className="rounded border-gray-300 text-indigo-500 focus:ring-indigo-400 h-3.5 w-3.5"
                             />
-                            <span className="font-mono text-gray-700 dark:text-gray-300 flex-1 truncate">{name}</span>
+                            <span className="font-mono text-muted-foreground flex-1 truncate">{name}</span>
                             <span className="flex gap-1 shrink-0">
                               {isAuth && (
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">auth</span>
@@ -796,7 +796,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
                                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">essential</span>
                               )}
                               {isSkip && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">skipped</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">skipped</span>
                               )}
                             </span>
                           </label>
@@ -826,11 +826,11 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
           {(step === 'preview' || step === 'ai-preview') && (
             <button
               onClick={() => { setStep('config'); setParsedData(null); setAiAnalysis(null); }}
-              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
               ← Back
             </button>
@@ -839,7 +839,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
           <div className="flex gap-3">
             <button
               onClick={handleReset}
-              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg"
             >
               Cancel
             </button>
@@ -884,7 +884,7 @@ export default function UCodeImportModal({ isOpen, onClose, onImport }: Props) {
               <>
                 <button
                   onClick={handleFallbackToStandard}
-                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg"
+                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg"
                 >
                   Import All (no AI)
                 </button>

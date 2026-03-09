@@ -60,13 +60,13 @@ export default function InvitesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-2xl mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Team Invites</h1>
+          <h1 className="text-2xl font-bold text-foreground">Team Invites</h1>
           <button
             onClick={() => navigate('/')}
-            className="text-blue-600 hover:underline text-sm"
+            className="text-primary hover:underline text-sm"
           >
             Back to Dashboard
           </button>
@@ -80,13 +80,13 @@ export default function InvitesPage() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading invites...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading invites...</p>
           </div>
         ) : invites.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="bg-card rounded-lg shadow p-8 text-center">
             <svg
-              className="w-16 h-16 text-gray-300 mx-auto mb-4"
+              className="w-16 h-16 text-border mx-auto mb-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -98,16 +98,16 @@ export default function InvitesPage() {
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
             </svg>
-            <p className="text-gray-600">No pending invites</p>
+            <p className="text-muted-foreground">No pending invites</p>
           </div>
         ) : (
           <div className="space-y-4">
             {invites.map((invite) => (
-              <div key={invite.id} className="bg-white rounded-lg shadow p-4">
+              <div key={invite.id} className="bg-card rounded-lg shadow p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-gray-800">{invite.team?.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-medium text-foreground">{invite.team?.name}</h3>
+                    <p className="text-sm text-muted-foreground">
                       Invited by {invite.inviter?.name || invite.inviter?.email}
                     </p>
                   </div>
@@ -115,14 +115,14 @@ export default function InvitesPage() {
                     <button
                       onClick={() => handleDecline(invite)}
                       disabled={actionLoading === invite.token}
-                      className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                      className="px-3 py-1 text-sm text-muted-foreground hover:bg-accent rounded transition-colors disabled:opacity-50"
                     >
                       Decline
                     </button>
                     <button
                       onClick={() => handleAccept(invite)}
                       disabled={actionLoading === invite.token}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors disabled:opacity-50"
                     >
                       {actionLoading === invite.token ? 'Joining...' : 'Accept'}
                     </button>

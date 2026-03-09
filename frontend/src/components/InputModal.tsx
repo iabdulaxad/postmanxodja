@@ -58,8 +58,8 @@ export default function InputModal({
         className="fixed inset-0 bg-black/50"
         onClick={onCancel}
       />
-      <div className="relative bg-white dark:bg-gray-800 shadow-xl p-6 w-full md:rounded-lg md:max-w-md md:mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
+      <div className="relative bg-card shadow-xl p-6 w-full md:rounded-lg md:max-w-md md:mx-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">{title}</h3>
         <form onSubmit={handleSubmit}>
           <input
             ref={inputRef}
@@ -67,20 +67,20 @@ export default function InputModal({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={placeholder}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none mb-4 bg-card text-foreground"
           />
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-accent hover:bg-accent/80 rounded-lg transition-colors"
             >
               {cancelText}
             </button>
             <button
               type="submit"
               disabled={!value.trim()}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 disabled:bg-muted rounded-lg transition-colors"
             >
               {confirmText}
             </button>

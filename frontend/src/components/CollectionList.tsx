@@ -468,7 +468,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       return (
         <div key={itemPath}>
           <div
-            className="group py-2 px-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center"
+            className="group py-2 px-3 cursor-pointer border-b border-border hover:bg-primary/10 flex items-center"
             style={{ paddingLeft }}
             onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
           >
@@ -496,12 +496,12 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-sm px-2 py-1 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 min-w-0 flex-1"
+                  className="text-sm px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
                   autoFocus
                 />
               ) : (
                 <span
-                  className="text-sm text-gray-700 dark:text-gray-300 truncate"
+                  className="text-sm text-foreground truncate"
                   onDoubleClick={(e) => handleStartRename(collectionId, itemPath, item.name, e)}
                 >
                   {item.name}
@@ -554,7 +554,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                 return (
                   <div
                     key={`${itemPath}-resp-${respIdx}`}
-                    className="group/resp flex items-center gap-1.5 py-1.5 px-3 border-b border-gray-100 dark:border-gray-700 hover:bg-purple-100/50 dark:hover:bg-purple-900/20 cursor-pointer"
+                    className="group/resp flex items-center gap-1.5 py-1.5 px-3 border-b border-border hover:bg-purple-100/50 dark:hover:bg-purple-900/20 cursor-pointer"
                     style={{ paddingLeft: `${depth * 16 + 32}px` }}
                     onClick={() => onLoadSavedResponse?.(resp, collectionId, itemPath, respIdx)}
                     title={`${origMethod ? origMethod + ' ' : ''}${origUrl}${hasBody ? '\n\nHas request body' : ''}`}
@@ -579,14 +579,14 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     >
                       {resp.code}
                     </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{resp.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{resp.name}</span>
                     {hasBody && (
                       <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-label="Has request body">
                         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                       </svg>
                     )}
                     {resp.responseTime !== undefined && resp.responseTime > 0 && (
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{resp.responseTime}ms</span>
+                      <span className="text-[10px] text-muted-foreground flex-shrink-0">{resp.responseTime}ms</span>
                     )}
                     <button
                       onClick={(e) => handleDeleteClick({ type: 'response', collectionId, path: itemPath, name: resp.name, responseIndex: respIdx }, e)}
@@ -613,11 +613,11 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       return (
         <div key={itemPath}>
           <div
-            className="group py-2 px-3 font-semibold bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
+            className="group py-2 px-3 font-semibold bg-muted text-foreground text-sm cursor-pointer hover:bg-accent flex items-center gap-2"
             style={{ paddingLeft }}
           >
             <div className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden" onClick={() => !isRenaming && toggleFolder(itemPath)}>
-              <span className="text-gray-400 text-xs">{isExpanded ? '▼' : '▶'}</span>
+              <span className="text-muted-foreground text-xs">{isExpanded ? '▼' : '▶'}</span>
               <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
@@ -636,7 +636,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-sm px-2 py-1 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 min-w-0 flex-1"
+                  className="text-sm px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
                   autoFocus
                 />
               ) : (
@@ -644,12 +644,12 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                   {item.name}
                 </span>
               )}
-              <span className="text-xs text-gray-400 flex-shrink-0">{item.item.filter(i => i.request || i.item).length}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">{item.item.filter(i => i.request || i.item).length}</span>
             </div>
             <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 ">
               <button
                 onClick={(e) => handleAddClick({ type: 'folder', collectionId, parentPath: itemPath }, e)}
-                className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                className="p-1 hover:bg-primary/10 rounded"
                 title="Add folder"
               >
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -677,7 +677,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
             </div>
           </div>
           {(isExpanded || !!searchFilter) && (
-            <div className="bg-white dark:bg-gray-800">
+            <div className="bg-card">
               {(searchFilter
                 ? filterItems(item.item, searchFilter)
                 : item.item
@@ -738,19 +738,19 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
 
   if (!currentTeam) {
     return (
-      <div className="h-full overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Select a team to view collections</p>
+      <div className="h-full overflow-y-auto border-r border-border bg-card p-4">
+        <p className="text-sm text-muted-foreground">Select a team to view collections</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <h3 className="px-4 py-3 font-semibold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 shrink-0">Collections</h3>
+    <div className="h-full flex flex-col border-r border-border bg-card">
+      <h3 className="px-4 py-3 font-semibold text-foreground border-b border-border shrink-0">Collections</h3>
       {/* Search */}
-      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="px-3 py-2 border-b border-border shrink-0">
         <div className="relative">
-          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -758,12 +758,12 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
             placeholder="Filter collections..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-1 focus:ring-blue-400 focus:border-blue-400 outline-none"
+            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border border-border bg-card text-foreground placeholder-muted-foreground focus:ring-1 focus:ring-ring focus:border-ring outline-none"
           />
           {searchFilter && (
             <button
               onClick={() => setSearchFilter('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -774,7 +774,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       </div>
       <div className="flex-1 overflow-y-auto">
       {collections.length === 0 ? (
-        <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
           No collections yet. Import one to get started.
         </div>
       ) : (
@@ -784,10 +784,10 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
           <div key={collection.id} className="mb-2">
             <div
               onClick={() => !isRenamingCollection && toggleCollection(collection.id)}
-              className="group px-4 py-3 cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center "
+              className="group px-4 py-3 cursor-pointer bg-muted hover:bg-accent border-b border-border flex justify-between items-center "
             >
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{expandedCollections.has(collection.id) ? '▼' : '▶'}</span>
+              <div className="text-sm font-medium text-foreground flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                <span className="text-muted-foreground flex-shrink-0">{expandedCollections.has(collection.id) ? '▼' : '▶'}</span>
                 {isRenamingCollection ? (
                   <input
                     type="text"
@@ -803,7 +803,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                       }
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="text-sm px-2 py-1 border border-blue-500 rounded focus:outline-none bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 min-w-0 flex-1"
+                    className="text-sm px-2 py-1 border border-primary rounded focus:outline-none bg-card text-foreground min-w-0 flex-1"
                     autoFocus
                   />
                 ) : (
@@ -820,7 +820,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                   <>
                     <button
                       onClick={(e) => handleAddClick({ type: 'folder', collectionId: collection.id }, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-100 rounded "
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/10 rounded "
                       title="Add folder"
                     >
                       <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -848,7 +848,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                       alert('Failed to export collection');
                     }
                   }}
-                  className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-lg shadow-sm "
+                  className="px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg shadow-sm "
                   title="Export to Postman format"
                 >
                   Export
@@ -862,7 +862,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               </div>
             </div>
             {expandedCollections.has(collection.id) && collectionData.get(collection.id) && (
-              <div className="bg-white dark:bg-gray-800">
+              <div className="bg-card">
                 {(searchFilter
                   ? filterItems(collectionData.get(collection.id)!.item, searchFilter)
                   : collectionData.get(collection.id)!.item

@@ -14,11 +14,11 @@ export function SpiderCursor() {
     const ctx = canvas.getContext("2d")!
     const { sin, cos, PI, hypot, min, max } = Math
 
-    // Blue theme colors
+    // Warm theme colors (primary + chart-2)
     const isDark = theme === "dark"
-    const bgColor = isDark ? "#111827" : "#eef2ff" // gray-900 / indigo-50
-    const lineColor = isDark ? "rgba(96, 165, 250, 0.6)" : "rgba(59, 130, 246, 0.35)" // blue-400 / blue-500
-    const dotColor = isDark ? "rgba(147, 197, 253, 0.8)" : "rgba(99, 102, 241, 0.4)" // blue-300 / indigo-500
+    const bgColor = isDark ? "#262624" : "#faf9f5"
+    const lineColor = isDark ? "rgba(217, 119, 87, 0.6)" : "rgba(201, 100, 66, 0.35)"
+    const dotColor = isDark ? "rgba(156, 135, 245, 0.8)" : "rgba(156, 135, 245, 0.4)"
 
     function spawn() {
       const pts = many(333, () => {

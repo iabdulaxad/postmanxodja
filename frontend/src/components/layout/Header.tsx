@@ -81,13 +81,13 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 
   return (
     <>
-      <header className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 border-b-2 border-blue-500 dark:border-blue-600 px-2 sm:px-3 py-2 md:px-6 md:py-3 flex justify-between items-center flex-shrink-0 min-w-0">
+      <header className="bg-background border-b-2 border-primary px-2 sm:px-3 py-2 md:px-6 md:py-3 flex justify-between items-center flex-shrink-0 min-w-0">
         <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
           {/* Hamburger menu - mobile only */}
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="md:hidden p-1.5 sm:p-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
+              className="md:hidden p-1.5 sm:p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors flex-shrink-0"
               title="Toggle sidebar"
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             </button>
           )}
           <div className="min-w-0">
-            <h1 className="text-base sm:text-lg md:text-2xl font-bold text-blue-600 dark:text-blue-400 truncate">Postbaby</h1>
+            <h1 className="text-base sm:text-lg md:text-2xl font-bold text-primary truncate">Postbaby</h1>
           </div>
         </div>
 
@@ -150,7 +150,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             <div className="hidden md:flex items-center gap-1">
               <button
                 onClick={() => setShowMembers(true)}
-                className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1"
+                className="px-3 py-2 text-sm text-muted-foreground hover:bg-accent rounded-lg transition-colors flex items-center gap-1"
                 title="View team members"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                 <>
                   <button
                     onClick={() => setShowInvite(true)}
-                    className="px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex items-center gap-1"
+                    className="px-3 py-2 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -171,7 +171,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   </button>
                   <button
                     onClick={() => setShowAPIKeys(true)}
-                    className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1"
+                    className="px-3 py-2 text-sm text-muted-foreground hover:bg-accent rounded-lg transition-colors flex items-center gap-1"
                     title="Manage API Keys"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +198,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
@@ -215,7 +215,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {/* Invites notification bell */}
           <button
             onClick={() => navigate('/invites')}
-            className="relative p-2 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="relative p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
             title="Team Invites"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,13 +231,13 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 sm:py-2 hover:bg-white/50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 sm:py-2 hover:bg-accent rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-700 dark:text-gray-200 hidden sm:block">{user?.name || user?.email}</span>
-              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="text-sm text-foreground hidden sm:block">{user?.name || user?.email}</span>
+              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -245,10 +245,10 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             {showUserMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-                <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-                  <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{user?.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-1rem)] bg-card rounded-lg shadow-lg border border-border z-20">
+                  <div className="px-4 py-3 border-b border-border">
+                    <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                   <div className="py-1">
                     <button
@@ -256,7 +256,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                         setShowUserMenu(false);
                         navigate('/invites');
                       }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between"
+                      className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-accent flex items-center justify-between"
                     >
                       <span>My Invites</span>
                       {pendingInvitesCount > 0 && (
@@ -267,10 +267,10 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                     </button>
                     {/* Mobile-only: team action items */}
                     {currentTeam && (
-                      <div className="md:hidden border-t border-gray-100 dark:border-gray-700 py-1">
+                      <div className="md:hidden border-t border-border py-1">
                         <button
                           onClick={() => { setShowUserMenu(false); setShowMembers(true); }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-accent"
                         >
                           Members
                         </button>
@@ -278,19 +278,19 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                           <>
                             <button
                               onClick={() => { setShowUserMenu(false); setShowInvite(true); }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-accent"
                             >
                               Invite Member
                             </button>
                             <button
                               onClick={() => { setShowUserMenu(false); setShowAPIKeys(true); }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-accent"
                             >
                               API Keys
                             </button>
                             <button
                               onClick={() => { setShowUserMenu(false); setShowAISettings(true); }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-accent"
                             >
                               AI Settings
                             </button>
@@ -337,12 +337,12 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {showAPIKeys && (
             <div className="fixed inset-0 flex items-center justify-center z-50">
               <div className="fixed inset-0 bg-black/50" onClick={() => setShowAPIKeys(false)} />
-              <div className="relative bg-white dark:bg-gray-800 w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:max-h-[80vh] overflow-y-auto md:mx-4 shadow-xl">
-                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">API Keys - {currentTeam.name}</h2>
+              <div className="relative bg-card w-full h-full md:h-auto md:rounded-lg md:max-w-2xl md:max-h-[80vh] overflow-y-auto md:mx-4 shadow-xl">
+                <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-foreground">API Keys - {currentTeam.name}</h2>
                   <button
                     onClick={() => setShowAPIKeys(false)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
+                    className="p-1 hover:bg-accent rounded text-muted-foreground"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -52,7 +52,7 @@ export default function ConfirmModal({
   const variantStyles = {
     danger: 'bg-red-500 hover:bg-red-600',
     warning: 'bg-yellow-500 hover:bg-yellow-600',
-    info: 'bg-blue-500 hover:bg-blue-600',
+    info: 'bg-primary hover:bg-primary/90',
   };
 
   return (
@@ -64,15 +64,15 @@ export default function ConfirmModal({
       <div
         ref={modalRef}
         tabIndex={-1}
-        className="relative bg-white dark:bg-gray-800 shadow-xl p-4 sm:p-6 w-[calc(100%-2rem)] sm:w-full rounded-lg max-w-md mx-4 outline-none"
+        className="relative bg-card shadow-xl p-4 sm:p-6 w-[calc(100%-2rem)] sm:w-full rounded-lg max-w-md mx-4 outline-none"
       >
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">{message}</p>
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">{title}</h3>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">{message}</p>
         <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
           {cancelText && (
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-accent hover:bg-accent/80 rounded-lg transition-colors"
             >
               {cancelText}
             </button>

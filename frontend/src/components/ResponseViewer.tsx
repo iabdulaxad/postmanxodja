@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { ExecuteResponse, SentRequest } from '../types';
 import { generateCurl } from '../utils/curlParser';
+import JsonTreeViewer, { type JsonTreeViewerHandle } from './JsonTreeViewer';
 
 interface Props {
   response: ExecuteResponse | null;
@@ -24,30 +25,30 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-3">
+    <div className="border border-border rounded-lg overflow-hidden mb-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-accent transition-colors"
       >
         <div className="flex items-center gap-2">
           <svg
-            className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          <span className="font-medium text-sm text-gray-700 dark:text-gray-300">{title}</span>
+          <span className="font-medium text-sm text-foreground">{title}</span>
           {count !== undefined && (
-            <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               {count}
             </span>
           )}
         </div>
       </button>
       {isOpen && (
-        <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 bg-background border-t border-border">
           {children}
         </div>
       )}
@@ -117,7 +118,7 @@ function SchemaTree({ schema, name, depth = 0 }: { schema: JsonSchemaType; name?
     boolean: 'text-orange-600 dark:text-orange-400',
     array: 'text-purple-600 dark:text-purple-400',
     object: 'text-yellow-600 dark:text-yellow-400',
-    null: 'text-gray-500 dark:text-gray-400',
+    null: 'text-muted-foreground',
   };
 
   const hasChildren = schema.type === 'object' && schema.properties && Object.keys(schema.properties).length > 0;
@@ -129,7 +130,7 @@ function SchemaTree({ schema, name, depth = 0 }: { schema: JsonSchemaType; name?
         {(hasChildren || hasArrayItems) && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
           >
             <svg
               className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -145,27 +146,27 @@ function SchemaTree({ schema, name, depth = 0 }: { schema: JsonSchemaType; name?
 
         {name && (
           <>
-            <span className="font-mono text-sm text-gray-800 dark:text-gray-200">{name}</span>
-            <span className="text-gray-400">:</span>
+            <span className="font-mono text-sm text-foreground">{name}</span>
+            <span className="text-muted-foreground">:</span>
           </>
         )}
 
-        <span className={`font-mono text-sm font-medium ${typeColors[schema.type] || 'text-gray-600'}`}>
+        <span className={`font-mono text-sm font-medium ${typeColors[schema.type] || 'text-muted-foreground'}`}>
           {schema.type}
           {schema.type === 'array' && schema.items && (
-            <span className="text-gray-500">[{schema.items.type}]</span>
+            <span className="text-muted-foreground">[{schema.items.type}]</span>
           )}
         </span>
 
         {schema.example !== undefined && schema.type !== 'object' && schema.type !== 'array' && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 truncate max-w-[200px]">
+          <span className="text-xs text-muted-foreground ml-2 truncate max-w-[200px]">
             example: <span className="font-mono">{JSON.stringify(schema.example)}</span>
           </span>
         )}
       </div>
 
       {isExpanded && hasChildren && schema.properties && (
-        <div className="border-l border-gray-300 dark:border-gray-600 ml-2">
+        <div className="border-l border-border ml-2">
           {Object.entries(schema.properties).map(([key, value]) => (
             <SchemaTree key={key} schema={value} name={key} depth={depth + 1} />
           ))}
@@ -173,8 +174,8 @@ function SchemaTree({ schema, name, depth = 0 }: { schema: JsonSchemaType; name?
       )}
 
       {isExpanded && hasArrayItems && schema.items?.properties && (
-        <div className="border-l border-gray-300 dark:border-gray-600 ml-2">
-          <div className="text-xs text-gray-500 dark:text-gray-400 py-1 ml-4">Array items:</div>
+        <div className="border-l border-border ml-2">
+          <div className="text-xs text-muted-foreground py-1 ml-4">Array items:</div>
           {Object.entries(schema.items.properties).map(([key, value]) => (
             <SchemaTree key={key} schema={value} name={key} depth={depth + 1} />
           ))}
@@ -193,13 +194,17 @@ function getMethodColor(method: string): string {
     PATCH: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   };
-  return colors[method.toUpperCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+  return colors[method.toUpperCase()] || 'bg-muted text-foreground';
 }
 
 export default function ResponseViewer({ response, request, onSaveResponse, canSaveResponse }: Props) {
   const [activeTab, setActiveTab] = useState<'body' | 'headers' | 'request' | 'schema'>('body');
   const [showSaveInput, setShowSaveInput] = useState(false);
   const [saveResponseName, setSaveResponseName] = useState('');
+  const [bodyViewMode, setBodyViewMode] = useState<'pretty' | 'raw' | 'preview'>('pretty');
+  const [wordWrap, setWordWrap] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const treeRef = useRef<JsonTreeViewerHandle>(null);
 
   // Parse response body for schema
   const parsedBody = useMemo(() => {
@@ -221,9 +226,37 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
     }
   }, [parsedBody]);
 
+  // Detect content type
+  const isHtml = useMemo(() => {
+    if (!response) return false;
+    const ct = Object.entries(response.headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1] || '';
+    return ct.includes('text/html');
+  }, [response]);
+
+  const isJson = parsedBody !== null;
+
+  // Auto-select best view mode when response changes
+  useEffect(() => {
+    if (isJson) setBodyViewMode('pretty');
+    else if (isHtml) setBodyViewMode('preview');
+    else setBodyViewMode('raw');
+  }, [response?.body, isJson, isHtml]);
+
+  // Copy handler
+  const handleCopyBody = useCallback(() => {
+    if (!response?.body) return;
+    try {
+      navigator.clipboard.writeText(JSON.stringify(JSON.parse(response.body), null, 2));
+    } catch {
+      navigator.clipboard.writeText(response.body);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [response?.body]);
+
   if (!response && !request) {
     return (
-      <div className="p-8 text-gray-400 dark:text-gray-500 text-center">
+      <div className="p-8 text-muted-foreground text-center">
         Send a request to see the response here
       </div>
     );
@@ -266,19 +299,19 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
     <div className="h-full w-full flex flex-col p-3 md:p-6 overflow-hidden">
       {/* Status Bar */}
       {response && (
-        <div className="mb-3 md:mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 sm:p-3 md:p-4 shadow-sm sm:items-center flex-wrap">
+        <div className="mb-3 md:mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-6 bg-card rounded-lg border border-border p-2.5 sm:p-3 md:p-4 shadow-sm sm:items-center flex-wrap">
           {request && (
             <div className="flex items-center gap-2 min-w-0">
               <span className={`font-bold text-sm px-3 py-1 rounded ${getMethodColor(request.method)}`}>
                 {request.method}
               </span>
-              <span className="text-sm text-gray-600 dark:text-gray-400 truncate min-w-0 flex-1" title={request.url}>
+              <span className="text-sm text-muted-foreground truncate min-w-0 flex-1" title={request.url}>
                 {request.url}
               </span>
             </div>
           )}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Status:</span>
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">Status:</span>
             <span
               className="font-bold text-base px-3 py-1 rounded"
               style={{
@@ -291,8 +324,8 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
             </span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Time:</span>
-            <span className="font-semibold text-sm sm:text-base text-gray-800 dark:text-gray-200">{response.time}ms</span>
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">Time:</span>
+            <span className="font-semibold text-sm sm:text-base text-foreground">{response.time}ms</span>
           </div>
           {/* Save Response Button */}
           {canSaveResponse && onSaveResponse && (
@@ -314,7 +347,7 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                       }
                     }}
                     placeholder="Response name..."
-                    className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-gray-100 w-full md:w-48"
+                    className="border border-border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground w-full md:w-48"
                     autoFocus
                   />
                   <button
@@ -334,7 +367,7 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                       setShowSaveInput(false);
                       setSaveResponseName('');
                     }}
-                    className="px-3 py-1.5 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 text-sm rounded-lg font-medium transition-colors"
+                    className="px-3 py-1.5 bg-muted hover:bg-accent text-foreground text-sm rounded-lg font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -361,14 +394,14 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
       )}
 
       {/* Tabs */}
-      <div className="mb-3 md:mb-4 flex gap-1 sm:gap-2 border-b border-gray-300 dark:border-gray-700 overflow-x-auto">
+      <div className="mb-3 md:mb-4 flex gap-1 sm:gap-2 border-b border-border overflow-x-auto">
         <button
           onClick={() => setActiveTab('body')}
           className={`
             px-3 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm transition-all duration-150 border-b-2 whitespace-nowrap
             ${activeTab === 'body'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'border-primary text-primary bg-primary/10'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
             }
           `}
         >
@@ -379,8 +412,8 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
           className={`
             px-3 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm transition-all duration-150 border-b-2 whitespace-nowrap
             ${activeTab === 'headers'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'border-primary text-primary bg-primary/10'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
             }
           `}
         >
@@ -392,8 +425,8 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
             className={`
               px-3 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm transition-all duration-150 border-b-2 whitespace-nowrap
               ${activeTab === 'request'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'border-primary text-primary bg-primary/10'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
               }
             `}
           >
@@ -406,8 +439,8 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
             className={`
               px-3 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm transition-all duration-150 border-b-2 whitespace-nowrap
               ${activeTab === 'schema'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                ? 'border-primary text-primary bg-primary/10'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent'
               }
             `}
           >
@@ -425,13 +458,135 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
       <div className="flex-1 min-h-0 min-w-0 overflow-auto">
         {/* Response Body Tab */}
         {activeTab === 'body' && response && (
-          <div className="h-full w-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-md overflow-auto">
+          <div className="h-full w-full bg-card border-2 border-border rounded-lg shadow-md overflow-hidden flex flex-col">
             {response.body ? (
-              <pre className="m-0 p-5 whitespace-pre-wrap break-all font-mono text-sm text-gray-900 dark:text-gray-100 leading-6 max-w-full">
-                {formatJSON(response.body)}
-              </pre>
+              <>
+                {/* Toolbar */}
+                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted flex-shrink-0 flex-wrap">
+                  {/* View mode pills */}
+                  <div className="flex bg-muted rounded-md p-0.5">
+                    {isJson && (
+                      <button
+                        onClick={() => setBodyViewMode('pretty')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                          bodyViewMode === 'pretty'
+                            ? 'bg-card text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Pretty
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setBodyViewMode('raw')}
+                      className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                        bodyViewMode === 'raw'
+                          ? 'bg-card text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Raw
+                    </button>
+                    {isHtml && (
+                      <button
+                        onClick={() => setBodyViewMode('preview')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                          bodyViewMode === 'preview'
+                            ? 'bg-card text-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Preview
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex-1" />
+
+                  {/* Pretty mode: Expand/Collapse All */}
+                  {bodyViewMode === 'pretty' && isJson && (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => treeRef.current?.expandAll()}
+                        className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                        title="Expand All"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => treeRef.current?.collapseAll()}
+                        className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                        title="Collapse All"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 9h4.5M15 9V4.5M15 9l5.5-5.5M15 15h4.5M15 15v4.5m0-4.5l5.5 5.5" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Raw mode: Word wrap toggle */}
+                  {bodyViewMode === 'raw' && (
+                    <button
+                      onClick={() => setWordWrap(!wordWrap)}
+                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                        wordWrap
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent'
+                      }`}
+                      title={wordWrap ? 'Disable word wrap' : 'Enable word wrap'}
+                    >
+                      Wrap
+                    </button>
+                  )}
+
+                  {/* Copy button */}
+                  <button
+                    onClick={handleCopyBody}
+                    className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors flex items-center gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Body content */}
+                <div className="flex-1 min-h-0 overflow-auto">
+                  {bodyViewMode === 'pretty' && isJson ? (
+                    <JsonTreeViewer ref={treeRef} data={parsedBody} />
+                  ) : bodyViewMode === 'preview' && isHtml ? (
+                    <iframe
+                      srcDoc={response.body}
+                      sandbox="allow-same-origin"
+                      className="w-full h-full border-0 bg-white"
+                      title="Response Preview"
+                    />
+                  ) : (
+                    <pre className={`m-0 p-5 font-mono text-sm text-foreground leading-6 max-w-full ${
+                      wordWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'
+                    }`}>
+                      {formatJSON(response.body)}
+                    </pre>
+                  )}
+                </div>
+              </>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-lg">
+              <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
                 No response body
               </div>
             )}
@@ -440,16 +595,16 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
 
         {/* Response Headers Tab */}
         {activeTab === 'headers' && response && (
-          <div className="h-full w-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-md p-5 overflow-auto">
+          <div className="h-full w-full bg-card border-2 border-border rounded-lg shadow-md p-5 overflow-auto">
             {Object.keys(response.headers).length > 0 ? (
               Object.entries(response.headers).map(([key, value]) => (
-                <div key={key} className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0 last:pb-0 last:mb-0">
-                  <div className="font-bold text-sm text-blue-600 dark:text-blue-400 mb-2">{key}</div>
-                  <div className="text-sm text-gray-800 dark:text-gray-200 break-all font-mono bg-gray-50 dark:bg-gray-700 p-2 rounded">{value}</div>
+                <div key={key} className="mb-4 pb-4 border-b border-border last:border-b-0 last:pb-0 last:mb-0">
+                  <div className="font-bold text-sm text-primary mb-2">{key}</div>
+                  <div className="text-sm text-foreground break-all font-mono bg-muted p-2 rounded">{value}</div>
                 </div>
               ))
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-lg">
+              <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
                 No headers
               </div>
             )}
@@ -475,7 +630,7 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                   btn.textContent = 'Copied!';
                   setTimeout(() => { btn.textContent = orig; }, 2000);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-muted text-muted-foreground rounded-lg hover:bg-accent transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -490,12 +645,12 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                 <span className={`font-bold text-sm px-3 py-1 rounded ${getMethodColor(request.method)}`}>
                   {request.method}
                 </span>
-                <code className="flex-1 text-sm font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded break-all text-gray-800 dark:text-gray-200">
+                <code className="flex-1 text-sm font-mono bg-muted p-2 rounded break-all text-foreground">
                   {request.url}
                 </code>
               </div>
               {request.timestamp && (
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-muted-foreground">
                   Sent at: {new Date(request.timestamp).toLocaleString()}
                 </div>
               )}
@@ -508,7 +663,7 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                   {Object.entries(request.queryParams).map(([key, value]) => (
                     <div key={key} className="flex flex-col md:flex-row md:items-start gap-0.5 md:gap-2">
                       <span className="font-medium text-sm text-purple-600 dark:text-purple-400 shrink-0">{key}:</span>
-                      <span className="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{value}</span>
+                      <span className="text-sm text-foreground font-mono break-all">{value}</span>
                     </div>
                   ))}
                 </div>
@@ -521,8 +676,8 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                 <div className="space-y-2">
                   {Object.entries(request.headers).map(([key, value]) => (
                     <div key={key} className="flex flex-col md:flex-row md:items-start gap-0.5 md:gap-2">
-                      <span className="font-medium text-sm text-blue-600 dark:text-blue-400 shrink-0">{key}:</span>
-                      <span className="text-sm text-gray-700 dark:text-gray-300 font-mono break-all">{value}</span>
+                      <span className="font-medium text-sm text-primary shrink-0">{key}:</span>
+                      <span className="text-sm text-foreground font-mono break-all">{value}</span>
                     </div>
                   ))}
                 </div>
@@ -533,16 +688,16 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
             {(hasRequestBody || request.bodyType === 'raw') && (
               <CollapsibleSection title="Request Body" defaultOpen={true}>
                 {request.bodyType && (
-                  <div className="mb-2 text-xs text-gray-500 dark:text-gray-400">
-                    Type: <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{request.bodyType}</span>
+                  <div className="mb-2 text-xs text-muted-foreground">
+                    Type: <span className="font-mono bg-muted px-1.5 py-0.5 rounded">{request.bodyType}</span>
                   </div>
                 )}
                 {request.body ? (
-                  <pre className="text-sm font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto max-h-[300px] text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-all">
+                  <pre className="text-sm font-mono bg-muted p-3 rounded overflow-auto max-h-[300px] text-foreground whitespace-pre-wrap break-all">
                     {formatJSON(request.body)}
                   </pre>
                 ) : (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                  <div className="text-sm text-muted-foreground italic">
                     No body content
                   </div>
                 )}
@@ -553,10 +708,10 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
 
         {/* Schema Tab (Swagger-style) */}
         {activeTab === 'schema' && jsonSchema && (
-          <div className="h-full w-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-md overflow-auto">
+          <div className="h-full w-full bg-card border-2 border-border rounded-lg shadow-md overflow-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -571,18 +726,18 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                 </div>
               </div>
 
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+              <div className="border border-border rounded-lg p-4 bg-muted">
                 <SchemaTree schema={jsonSchema} />
               </div>
             </div>
 
             {/* Raw JSON Schema */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-t border-border">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Raw JSON Schema</h4>
+                <h4 className="font-medium text-sm text-foreground">Raw JSON Schema</h4>
                 <button
                   onClick={() => navigator.clipboard.writeText(JSON.stringify(jsonSchema, null, 2))}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-muted text-muted-foreground rounded hover:bg-accent transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -599,7 +754,7 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
 
         {/* No response state */}
         {activeTab === 'body' && !response && (
-          <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-lg">
+          <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
             Send a request to see the response
           </div>
         )}
