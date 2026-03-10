@@ -108,13 +108,13 @@ export default function TabsBar({
           display: none;
         }
       `}</style>
-      <div className="flex items-center bg-card border-b border-border w-full min-w-0 flex-shrink-0" style={{ transition: 'none' }}>
+      <div className="flex items-center bg-card border-b border-border w-full min-w-0 flex-shrink-0 transition-none">
         {canScrollLeft && (
           <button
             onClick={scrollLeft}
-            className="p-2 hover:bg-accent rounded flex-shrink-0"
-            style={{ transition: 'none' }}
+            className="p-2 hover:bg-accent rounded-lg flex-shrink-0 transition-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Scroll left"
+            aria-label="Scroll tabs left"
           >
             <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -123,11 +123,10 @@ export default function TabsBar({
         )}
         <div
           ref={tabsContainerRef}
-          className="hide-scrollbar flex items-center overflow-x-auto flex-1 min-w-0"
+          className="hide-scrollbar flex items-center overflow-x-auto flex-1 min-w-0 transition-none"
           style={{
             scrollbarWidth: 'none',
             maxWidth: '100%',
-            transition: 'none',
             msOverflowStyle: 'none'
           }}
         >
@@ -136,8 +135,7 @@ export default function TabsBar({
             key={tab.id}
             ref={activeTabId === tab.id ? activeTabRef : null}
             onClick={() => onTabSelect(tab.id)}
-            style={{ transition: 'none' }}
-            className={`
+            className={`transition-none
               group flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 md:px-3 py-2 md:py-1.5 cursor-pointer font-medium text-xs border-b-2
               min-w-[80px] sm:min-w-[100px] md:min-w-[120px] max-w-[160px] md:max-w-[200px] shrink-0
               ${activeTabId === tab.id
@@ -183,8 +181,8 @@ export default function TabsBar({
                 e.stopPropagation();
                 onTabClose(tab.id);
               }}
-              style={{ transition: 'none' }}
-              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-0.5 hover:bg-muted rounded flex-shrink-0"
+              className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 md:p-0.5 hover:bg-muted rounded-lg shrink-0 transition-none"
+              aria-label={`Close ${tab.name || 'Untitled'} tab`}
             >
               <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -196,21 +194,21 @@ export default function TabsBar({
       {canScrollRight && (
         <button
           onClick={scrollRight}
-          className="p-2 hover:bg-accent rounded flex-shrink-0"
-          style={{ transition: 'none' }}
+          className="p-2 hover:bg-accent rounded-lg shrink-0 transition-none focus-visible:ring-2 focus-visible:ring-ring"
           title="Scroll right"
+          aria-label="Scroll tabs right"
         >
           <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
       )}
-      <div className="flex items-center flex-shrink-0 gap-1 px-2" style={{ transition: 'none' }}>
+      <div className="flex items-center shrink-0 gap-1 px-2 transition-none">
         <button
           onClick={onImportCurl}
-          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-md transition-colors"
-          style={{ transition: 'none' }}
+          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           title="Import from cURL"
+          aria-label="Import from cURL"
         >
           <svg className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -218,9 +216,9 @@ export default function TabsBar({
         </button>
         <button
           onClick={onNewTab}
-          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-md transition-colors"
-          style={{ transition: 'none' }}
+          className="p-2 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           title="New Tab"
+          aria-label="New Tab"
         >
           <svg className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

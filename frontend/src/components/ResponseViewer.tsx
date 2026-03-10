@@ -249,8 +249,11 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
 
   if (!response && !request) {
     return (
-      <div className="p-8 text-muted-foreground text-center">
-        Send a request to see the response here
+      <div className="p-8 text-center">
+        <svg className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <p className="text-muted-foreground">Send a request to see the response here</p>
       </div>
     );
   }
@@ -592,8 +595,11 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                 </div>
               </>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
-                No response body
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                <svg className="w-10 h-10 text-muted-foreground/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-lg">No response body</p>
               </div>
             )}
           </div>
@@ -610,8 +616,11 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
                 </div>
               ))
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
-                No headers
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                <svg className="w-10 h-10 text-muted-foreground/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <p className="text-lg">No headers</p>
               </div>
             )}
           </div>
@@ -760,8 +769,11 @@ export default function ResponseViewer({ response, request, onSaveResponse, canS
 
         {/* No response state */}
         {activeTab === 'body' && !response && (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-lg">
-            Send a request to see the response
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+            <svg className="w-12 h-12 text-muted-foreground/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <p>Send a request to see the response</p>
           </div>
         )}
       </div>

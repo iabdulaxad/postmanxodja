@@ -495,13 +495,17 @@ export default function RequestBuilder({
             <div>
               {queryParams.map((param, index) => (
                 <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                  <input
-                    type="text"
-                    value={param.key}
-                    onChange={(e) => updateQueryParam(index, 'key', e.target.value)}
-                    placeholder="Key"
-                    className="w-full md:flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                  />
+                  <div className="w-full md:flex-1">
+                    <label htmlFor={`param-key-${index}`} className="sr-only">Parameter key</label>
+                    <input
+                      id={`param-key-${index}`}
+                      type="text"
+                      value={param.key}
+                      onChange={(e) => updateQueryParam(index, 'key', e.target.value)}
+                      placeholder="Key"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
+                    />
+                  </div>
                   <div className="flex gap-2 md:flex-1 md:min-w-0">
                     <div className="flex-1 min-w-0">
                       <VariableInput
@@ -538,13 +542,17 @@ export default function RequestBuilder({
             <div>
               {headers.map((header, index) => (
                 <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                  <input
-                    type="text"
-                    value={header.key}
-                    onChange={(e) => updateHeader(index, 'key', e.target.value)}
-                    placeholder="Key"
-                    className="w-full md:flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                  />
+                  <div className="w-full md:flex-1">
+                    <label htmlFor={`header-key-${index}`} className="sr-only">Header key</label>
+                    <input
+                      id={`header-key-${index}`}
+                      type="text"
+                      value={header.key}
+                      onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                      placeholder="Key"
+                      className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
+                    />
+                  </div>
                   <div className="flex gap-2 md:flex-1 md:min-w-0">
                     <div className="flex-1 min-w-0">
                       <VariableInput
@@ -703,13 +711,17 @@ export default function RequestBuilder({
                   {formData.map((item, index) => (
                     <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2 md:items-center">
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={item.key}
-                          onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
-                          placeholder="Key"
-                          className="flex-1 md:w-auto border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                        />
+                        <div className="flex-1 md:w-auto">
+                          <label htmlFor={`formdata-key-${index}`} className="sr-only">Field key</label>
+                          <input
+                            id={`formdata-key-${index}`}
+                            type="text"
+                            value={item.key}
+                            onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
+                            placeholder="Key"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
+                          />
+                        </div>
                         <select
                           value={item.type}
                           onChange={(e) => updateFormDataItem(index, 'type', e.target.value)}
@@ -775,13 +787,17 @@ export default function RequestBuilder({
                 <div>
                   {formData.map((item, index) => (
                     <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                      <input
-                        type="text"
-                        value={item.key}
-                        onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
-                        placeholder="Key"
-                        className="w-full md:flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                      />
+                      <div className="w-full md:flex-1">
+                        <label htmlFor={`urlencoded-key-${index}`} className="sr-only">Field key</label>
+                        <input
+                          id={`urlencoded-key-${index}`}
+                          type="text"
+                          value={item.key}
+                          onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
+                          placeholder="Key"
+                          className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
+                        />
+                      </div>
                       <div className="flex gap-2 md:flex-1 md:min-w-0">
                         <div className="flex-1 min-w-0">
                           <VariableInput

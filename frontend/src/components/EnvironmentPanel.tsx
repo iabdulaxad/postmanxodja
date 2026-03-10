@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getEnvironments, createEnvironment, updateEnvironment, deleteEnvironment } from '../services/api';
 import { useTeam } from '../contexts/TeamContext';
+import ConfirmModal from './ConfirmModal';
 import type { Environment } from '../types';
 
 interface Props {
@@ -14,6 +15,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
   const [formName, setFormName] = useState('');
   const [formVariables, setFormVariables] = useState<Array<{ key: string; value: string }>>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { currentTeam } = useTeam();
 
   useEffect(() => {
@@ -59,16 +61,15 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!currentTeam) return;
-    if (confirm('Delete this environment?')) {
-      try {
-        await deleteEnvironment(currentTeam.id, id);
-        loadEnvironments();
-      } catch (err) {
-        console.error('Failed to delete environment:', err);
-      }
+  const handleConfirmDelete = async () => {
+    if (!currentTeam || !deleteTargetId) return;
+    try {
+      await deleteEnvironment(currentTeam.id, deleteTargetId);
+      loadEnvironments();
+    } catch (err) {
+      console.error('Failed to delete environment:', err);
     }
+    setDeleteTargetId(null);
   };
 
   const resetForm = () => {
@@ -101,14 +102,17 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
-          <span className="text-muted-foreground text-[10px]">{isExpanded ? '▼' : '▶'}</span>
+          <svg className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
           Environments
           <span className="text-xs text-muted-foreground font-normal">({environments.length})</span>
         </h3>
         {!showForm && isExpanded && (
           <button
             onClick={(e) => { e.stopPropagation(); setShowForm(true); }}
-            className="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] rounded shadow-sm"
+            className="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] rounded-lg shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="New environment"
           >
             New
           </button>
@@ -122,36 +126,47 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
               Define variables here, then use them in requests with <code className="bg-card px-1.5 py-0.5 rounded text-xs font-mono">{'{{variableName}}'}</code>
             </p>
           </div>
+          <label htmlFor="env-name" className="block text-xs font-medium text-foreground mb-1">Environment Name</label>
           <input
+            id="env-name"
             type="text"
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
-            placeholder="Environment name"
-            className="w-full border border-border rounded px-2 py-1.5 mb-2 text-sm focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
+            placeholder="e.g. Production"
+            className="w-full border border-border rounded-lg px-2 py-1.5 mb-2 text-sm focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
           />
 
           <h4 className="font-semibold text-foreground mb-2 text-xs">Variables</h4>
           <div className="max-h-48 overflow-y-auto">
             {formVariables.map((variable, index) => (
               <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={variable.key}
-                  onChange={(e) => updateVariable(index, 'key', e.target.value)}
-                  placeholder="Key"
-                  className="w-1/3 min-w-0 border border-border rounded px-2 py-1 text-xs focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
-                />
-                <input
-                  type="text"
-                  value={variable.value}
-                  onChange={(e) => updateVariable(index, 'value', e.target.value)}
-                  placeholder="Value"
-                  title={variable.value}
-                  className="flex-1 min-w-0 border border-border rounded px-2 py-1 text-xs focus:ring-2 focus:ring-ring focus:border-primary outline-none truncate bg-card text-foreground"
-                />
+                <div className="w-1/3 min-w-0">
+                  <label htmlFor={`env-var-key-${index}`} className="sr-only">Variable key</label>
+                  <input
+                    id={`env-var-key-${index}`}
+                    type="text"
+                    value={variable.key}
+                    onChange={(e) => updateVariable(index, 'key', e.target.value)}
+                    placeholder="Key"
+                    className="w-full border border-border rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-ring focus:border-primary outline-none bg-card text-foreground"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label htmlFor={`env-var-value-${index}`} className="sr-only">Variable value</label>
+                  <input
+                    id={`env-var-value-${index}`}
+                    type="text"
+                    value={variable.value}
+                    onChange={(e) => updateVariable(index, 'value', e.target.value)}
+                    placeholder="Value"
+                    title={variable.value}
+                    className="w-full border border-border rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-ring focus:border-primary outline-none truncate bg-card text-foreground"
+                  />
+                </div>
                 <button
                   onClick={() => removeVariable(index)}
-                  className="px-2 py-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded text-xs flex-shrink-0"
+                  className="px-2 py-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-xs shrink-0 focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Remove variable ${variable.key || index + 1}`}
                 >
                   ×
                 </button>
@@ -160,7 +175,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           </div>
           <button
             onClick={addVariable}
-            className="mb-2 px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-xs shadow-sm"
+            className="mb-2 px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-xs shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
           >
             Add Variable
           </button>
@@ -168,13 +183,13 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           <div className="flex gap-2">
             <button
               onClick={handleSubmit}
-              className="px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-xs shadow-sm"
+              className="px-3 py-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-xs shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
             >
               Save
             </button>
             <button
               onClick={resetForm}
-              className="px-3 py-1 bg-muted hover:bg-accent text-foreground rounded text-xs shadow-sm"
+              className="px-3 py-1 bg-muted hover:bg-accent text-foreground rounded-lg text-xs shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancel
             </button>
@@ -187,7 +202,7 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
           {environments.map(env => (
             <div
               key={env.id}
-              className="p-2 mb-1 bg-muted border border-border rounded flex justify-between items-center hover:bg-accent"
+              className="p-2 mb-1 bg-muted border border-border rounded-lg flex justify-between items-center hover:bg-accent"
             >
               <div className="min-w-0 flex-1 mr-2">
                 <div className="font-semibold text-foreground text-sm truncate">{env.name}</div>
@@ -195,16 +210,16 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
                   {Object.keys(env.variables).length} variables
                 </div>
               </div>
-              <div className="flex gap-1 flex-shrink-0">
+              <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => handleEdit(env)}
-                  className="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded "
+                  className="px-2 py-1 bg-primary hover:bg-primary/90 text-primary-foreground text-xs rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => env.id && handleDelete(env.id)}
-                  className="px-2 py-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs rounded "
+                  onClick={() => env.id && setDeleteTargetId(env.id)}
+                  className="px-2 py-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Del
                 </button>
@@ -212,10 +227,27 @@ export default function EnvironmentPanel({ onUpdate }: Props) {
             </div>
           ))}
           {environments.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-2">No environments yet</p>
+            <div className="text-center py-4">
+              <svg className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <p className="text-sm text-muted-foreground">No environments yet</p>
+              <p className="text-xs text-muted-foreground/70 mt-0.5">Create one to use variables in requests</p>
+            </div>
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="Delete environment?"
+        message="Are you sure you want to delete this environment? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+        variant="danger"
+      />
     </div>
   );
 }

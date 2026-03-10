@@ -87,8 +87,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="md:hidden p-1.5 sm:p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors flex-shrink-0"
+              className="md:hidden p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-ring"
               title="Toggle sidebar"
+              aria-label="Toggle sidebar"
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -150,7 +151,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             <div className="hidden md:flex items-center gap-1">
               <button
                 onClick={() => setShowMembers(true)}
-                className="px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent rounded transition-colors flex items-center gap-1"
+                className="px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent rounded transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring"
                 title="View team members"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +163,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                 <>
                   <button
                     onClick={() => setShowInvite(true)}
-                    className="px-2 py-1.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors flex items-center gap-1"
+                    className="px-2 py-1.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -171,7 +172,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   </button>
                   <button
                     onClick={() => setShowAPIKeys(true)}
-                    className="px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent rounded transition-colors flex items-center gap-1"
+                    className="px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent rounded transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring"
                     title="Manage API Keys"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +182,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   </button>
                   <button
                     onClick={() => setShowAISettings(true)}
-                    className="px-2 py-1.5 text-xs text-primary hover:bg-primary/10 rounded transition-colors flex items-center gap-1"
+                    className="px-2 py-1.5 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-ring"
                     title="AI Settings"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,8 +199,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 text-muted-foreground hover:bg-accent rounded transition-colors"
+            className="p-1.5 text-muted-foreground hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,8 +217,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           {/* Invites notification bell */}
           <button
             onClick={() => navigate('/invites')}
-            className="relative p-1.5 text-muted-foreground hover:bg-accent rounded transition-colors"
+            className="relative p-1.5 text-muted-foreground hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
             title="Team Invites"
+            aria-label="Team Invites"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -231,7 +234,8 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 sm:py-1.5 hover:bg-accent rounded transition-colors"
+              className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 sm:py-1.5 hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="User menu"
             >
               <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
                 {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
@@ -342,7 +346,8 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   <h2 className="text-lg font-semibold text-foreground">API Keys - {currentTeam.name}</h2>
                   <button
                     onClick={() => setShowAPIKeys(false)}
-                    className="p-1 hover:bg-accent rounded text-muted-foreground"
+                    className="p-1 hover:bg-accent rounded-lg text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Close API Keys"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

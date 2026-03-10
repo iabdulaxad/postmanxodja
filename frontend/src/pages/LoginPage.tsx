@@ -57,8 +57,9 @@ export default function LoginPage() {
       {/* Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 z-20 p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+        className="absolute top-4 right-4 z-20 p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
         title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       >
         {theme === 'light' ? (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +89,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-6 text-foreground"
+            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -122,29 +123,33 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="login-email" className="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="login-password" className="block text-sm font-medium text-foreground mb-1">
                 Password
               </label>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 required
               />
             </div>
@@ -152,7 +157,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
@@ -162,7 +167,7 @@ export default function LoginPage() {
             Don't have an account?{' '}
             <Link
               to={redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register'}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:underline font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
             >
               Sign up
             </Link>

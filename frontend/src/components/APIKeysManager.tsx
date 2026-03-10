@@ -9,6 +9,7 @@ export default function APIKeysManager() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newKey, setNewKey] = useState<APIKey | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<APIKey | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [formData, setFormData] = useState<CreateAPIKeyRequest>({
     name: '',
     permissions: 'read',
@@ -49,7 +50,7 @@ export default function APIKeysManager() {
       setShowCreateModal(false);
     } catch (err) {
       console.error('Failed to create API key:', err);
-      alert('Failed to create API key');
+      showToast('Failed to create API key', 'error');
     }
   };
 
@@ -61,13 +62,18 @@ export default function APIKeysManager() {
       setDeleteTarget(null);
     } catch (err) {
       console.error('Failed to delete API key:', err);
-      alert('Failed to delete API key');
+      showToast('Failed to delete API key', 'error');
     }
+  };
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    showToast('Copied to clipboard!', 'success');
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -360,6 +366,17 @@ export default function APIKeysManager() {
         onCancel={() => setDeleteTarget(null)}
         variant="danger"
       />
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 ${
+          toast.type === 'success'
+            ? 'bg-green-600 text-white'
+            : 'bg-destructive text-destructive-foreground'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

@@ -520,8 +520,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     e.stopPropagation();
                     toggleResponses(itemPath);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-primary/10 rounded"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-primary/10 rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
                   title={responsesExpanded ? 'Hide saved responses' : 'Show saved responses'}
+                  aria-label={responsesExpanded ? 'Hide saved responses' : 'Show saved responses'}
                 >
                   <svg className={`w-4 h-4 text-primary transition-transform ${responsesExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -530,8 +531,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               )}
               <button
                 onClick={(e) => handleDeleteClick({ type: 'request', collectionId, path: itemPath, name: item.name }, e)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 title="Delete request"
+                aria-label="Delete request"
               >
                 <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -590,8 +592,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     )}
                     <button
                       onClick={(e) => handleDeleteClick({ type: 'response', collectionId, path: itemPath, name: resp.name, responseIndex: respIdx }, e)}
-                      className="opacity-0 group-hover/resp:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md ml-auto flex-shrink-0 transition-colors"
+                      className="opacity-0 group-hover/resp:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-lg ml-auto shrink-0 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                       title="Delete saved response"
+                      aria-label="Delete saved response"
                     >
                       <svg className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -617,7 +620,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
             style={{ paddingLeft }}
           >
             <div className="flex-1 flex items-center gap-1.5 min-w-0 overflow-hidden" onClick={() => !isRenaming && toggleFolder(itemPath)}>
-              <span className="text-muted-foreground text-[10px]">{isExpanded ? '▼' : '▶'}</span>
+              <svg className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
               <svg className="w-3.5 h-3.5 text-primary/70" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
@@ -649,8 +654,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
             <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
               <button
                 onClick={(e) => handleAddClick({ type: 'folder', collectionId, parentPath: itemPath }, e)}
-                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
+                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 title="Add folder"
+                aria-label="Add folder"
               >
                 <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -658,8 +664,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               </button>
               <button
                 onClick={(e) => handleAddClick({ type: 'request', collectionId, parentPath: itemPath }, e)}
-                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
+                className="p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 title="Add request"
+                aria-label="Add request"
               >
                 <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -667,8 +674,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               </button>
               <button
                 onClick={(e) => handleDeleteClick({ type: 'folder', collectionId, path: itemPath, name: item.name }, e)}
-                className="p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
+                className="p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                 title="Delete folder"
+                aria-label="Delete folder"
               >
                 <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -780,8 +788,12 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       </div>
       <div className="flex-1 overflow-y-auto">
       {collections.length === 0 ? (
-        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-          No collections yet. Import one to get started.
+        <div className="px-4 py-8 text-center">
+          <svg className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <p className="text-sm text-muted-foreground">No collections yet</p>
+          <p className="text-xs text-muted-foreground/70 mt-0.5">Import one to get started</p>
         </div>
       ) : (
         collections.filter(c => collectionMatchesSearch(c, searchFilter)).map(collection => {
@@ -793,7 +805,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               className="group px-2 py-1.5 cursor-pointer bg-muted hover:bg-accent border-b border-border flex justify-between items-center"
             >
               <div className="text-[13px] font-semibold text-foreground flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
-                <span className="text-muted-foreground text-[10px] flex-shrink-0">{expandedCollections.has(collection.id) ? '▼' : '▶'}</span>
+                <svg className={`w-3 h-3 text-muted-foreground shrink-0 transition-transform ${expandedCollections.has(collection.id) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
                 {isRenamingCollection ? (
                   <input
                     type="text"
@@ -826,8 +840,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                   <>
                     <button
                       onClick={(e) => handleAddClick({ type: 'folder', collectionId: collection.id }, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                       title="Add folder"
+                      aria-label="Add folder"
                     >
                       <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -835,8 +850,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                     </button>
                     <button
                       onClick={(e) => handleAddClick({ type: 'request', collectionId: collection.id }, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-md transition-colors"
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/15 dark:hover:bg-primary/25 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                       title="Add request"
+                      aria-label="Add request"
                     >
                       <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -851,11 +867,11 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                       await exportCollection(currentTeam.id, collection.id, collection.name);
                     } catch (err) {
                       console.error('Failed to export collection:', err);
-                      alert('Failed to export collection');
                     }
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded-md transition-colors"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                   title="Export to Postman format"
+                  aria-label="Export collection"
                 >
                   <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -863,8 +879,9 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                 </button>
                 <button
                   onClick={(e) => handleDeleteClick({ type: 'collection', collectionId: collection.id, name: collection.name }, e)}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-md transition-colors"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 dark:hover:bg-destructive/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                   title="Delete collection"
+                  aria-label="Delete collection"
                 >
                   <svg className="w-4 h-4 text-muted-foreground hover:text-destructive transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -68,8 +68,9 @@ export default function RegisterPage() {
       {/* Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 z-20 p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+        className="absolute top-4 right-4 z-20 p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
         title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       >
         {theme === 'light' ? (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +100,7 @@ export default function RegisterPage() {
           <button
             onClick={handleGoogleSignup}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-6 text-foreground"
+            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-6 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -133,57 +134,90 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="register-name" className="block text-sm font-medium text-foreground mb-1">
                 Name
               </label>
               <input
+                id="register-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="John Doe"
+                autoComplete="name"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="register-email" className="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
               <input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="register-password" className="block text-sm font-medium text-foreground mb-1">
                 Password
               </label>
               <input
+                id="register-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="••••••••"
+                autoComplete="new-password"
                 required
               />
+              {password && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 h-1 rounded-full bg-border overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        password.length < 6 ? 'w-1/4 bg-destructive' :
+                        password.length < 10 ? 'w-2/4 bg-yellow-500' :
+                        password.length < 14 ? 'w-3/4 bg-primary' :
+                        'w-full bg-green-500'
+                      }`}
+                    />
+                  </div>
+                  <span className={`text-xs ${
+                    password.length < 6 ? 'text-destructive' :
+                    password.length < 10 ? 'text-yellow-600 dark:text-yellow-400' :
+                    password.length < 14 ? 'text-primary' :
+                    'text-green-600 dark:text-green-400'
+                  }`}>
+                    {password.length < 6 ? 'Weak' :
+                     password.length < 10 ? 'Fair' :
+                     password.length < 14 ? 'Good' :
+                     'Strong'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-foreground mb-1">
                 Confirm Password
               </label>
               <input
+                id="register-confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring bg-card text-foreground"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
                 placeholder="••••••••"
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -191,7 +225,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
@@ -201,7 +235,7 @@ export default function RegisterPage() {
             Already have an account?{' '}
             <Link
               to={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:underline font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
             >
               Sign in
             </Link>
