@@ -1,1 +1,350 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Design System Theme ── */
+
+:root {
+  --card: #ffffff;
+  --ring: #3b82f6;
+  --input: #cbd5e1;
+  --muted: #f1f5f9;
+  --accent: #e0f2fe;
+  --border: #e2e8f0;
+  --radius: 0.5rem;
+  --chart-1: #2563eb;
+  --chart-2: #06b6d4;
+  --chart-3: #e0f2fe;
+  --chart-4: #bae6fd;
+  --chart-5: #1d4ed8;
+  --popover: #ffffff;
+  --primary: #2563eb;
+  --sidebar: #f1f5f9;
+  --secondary: #e2e8f0;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --destructive: #dc2626;
+  --sidebar-ring: #93c5fd;
+  --sidebar-accent: #e0f2fe;
+  --sidebar-border: #e2e8f0;
+  --card-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --muted-foreground: #64748b;
+  --accent-foreground: #0c4a6e;
+  --popover-foreground: #0f172a;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #334155;
+  --secondary-foreground: #334155;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #0c4a6e;
+  --sidebar-primary-foreground: #ffffff;
+}
+
+.dark {
+  --card: #1e293b;
+  --ring: #3b82f6;
+  --input: #475569;
+  --muted: #1e293b;
+  --accent: #1e3a5f;
+  --border: #334155;
+  --chart-1: #3b82f6;
+  --chart-2: #22d3ee;
+  --chart-3: #1e293b;
+  --chart-4: #1e3a5f;
+  --chart-5: #60a5fa;
+  --popover: #1e293b;
+  --primary: #3b82f6;
+  --sidebar: #0f172a;
+  --secondary: #e2e8f0;
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --destructive: #ef4444;
+  --sidebar-ring: #3b82f6;
+  --sidebar-accent: #1e293b;
+  --sidebar-border: #334155;
+  --card-foreground: #e2e8f0;
+  --sidebar-primary: #1e3a5f;
+  --muted-foreground: #94a3b8;
+  --accent-foreground: #bae6fd;
+  --popover-foreground: #e2e8f0;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #cbd5e1;
+  --secondary-foreground: #1e293b;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #e0f2fe;
+  --sidebar-primary-foreground: #ffffff;
+}
+
+@theme inline {
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-radius: var(--radius);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+}
+
+/* Prevent horizontal overflow on mobile */
+html {
+  overflow-x: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Use dvh (dynamic viewport height) for mobile browsers to account for address bar */
+html, body, #root {
+  height: 100%;
+}
+
+/* Base styles for body */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Safe area padding for notched phones (iPhone X+, etc.) */
+@supports (padding: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Touch-friendly sizing for interactive elements on mobile */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Scrollbar styles for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--input);
+}
+
+/* ── VariableInput Editor Styles ── */
+
+.vi-editor-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--card);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.vi-editor-wrapper:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 30%, transparent);
+}
+
+.dark .vi-editor-wrapper {
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.dark .vi-editor-wrapper:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 30%, transparent);
+}
+
+/* Textarea (transparent text, handles input) */
+.vi-textarea {
+  color: transparent !important;
+  caret-color: var(--foreground);
+  outline: none !important;
+}
+
+.dark .vi-textarea {
+  caret-color: var(--foreground);
+}
+
+/* Pre (renders highlighted text) */
+.vi-pre {
+  color: var(--foreground);
+}
+
+.dark .vi-pre {
+  color: var(--foreground);
+}
+
+/* Single-line mode — scroll horizontally for long text, clip vertically */
+.vi-singleline {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox */
+}
+
+.vi-singleline::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.vi-singleline .vi-textarea,
+.vi-singleline .vi-pre {
+  white-space: pre !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Multiline mode */
+.vi-multiline {
+  resize: vertical;
+}
+
+/* Variable highlight spans — use outline + box-shadow instead of
+   border + padding so highlighted spans don't add extra width
+   (which would desync <pre> and <textarea> widths). */
+.vi-var {
+  border-radius: 3px;
+  outline: 1px solid;
+  outline-offset: 1px;
+  cursor: pointer;
+}
+
+.vi-var-found {
+  background: rgba(219, 234, 254, 0.9);
+  color: #1d4ed8;
+  outline-color: #93c5fd;
+}
+
+.vi-var-missing {
+  background: rgba(254, 226, 226, 0.9);
+  color: #b91c1c;
+  outline-color: #fca5a5;
+}
+
+.dark .vi-var-found {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  outline-color: rgba(147, 197, 253, 0.4);
+}
+
+.dark .vi-var-missing {
+  background: rgba(185, 28, 28, 0.25);
+  color: #f87171;
+  outline-color: rgba(248, 113, 113, 0.4);
+}
+
+/* ── JSON Syntax Highlighting ── */
+
+/* Keys: "property": */
+.vi-json-key {
+  color: #9333ea;
+}
+
+.dark .vi-json-key {
+  color: #c084fc;
+}
+
+/* String values */
+.vi-json-string {
+  color: #16a34a;
+}
+
+.dark .vi-json-string {
+  color: #4ade80;
+}
+
+/* Numbers */
+.vi-json-number {
+  color: #2563eb;
+}
+
+.dark .vi-json-number {
+  color: #93c5fd;
+}
+
+/* Booleans (true / false) */
+.vi-json-boolean {
+  color: #dc2626;
+}
+
+.dark .vi-json-boolean {
+  color: #f87171;
+}
+
+/* null */
+.vi-json-null {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.dark .vi-json-null {
+  color: #9ca3af;
+}
+
+/* ── Mobile Sidebar Drawer ── */
+
+.mobile-sidebar-backdrop {
+  background: rgba(100, 116, 139, 0.3);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-sidebar-drawer {
+  animation: slideInLeft 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Mobile-specific layout fixes */
+@media (max-width: 767px) {
+  /* Use dynamic viewport height to handle mobile browser chrome */
+  .h-screen {
+    height: 100dvh;
+  }
+
+  /* Ensure response body code doesn't overflow */
+  pre {
+    word-break: break-word;
+  }
+}

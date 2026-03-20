@@ -1,14 +1,82 @@
 package services
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"postmanxodja/models"
 	"strings"
 	"time"
 )
+
+// rewriteLocalhostURL rewrites localhost / 127.0.0.1 URLs so that requests
+// made from inside a Docker container reach the host machine.
+// When DOCKER_HOST_OVERRIDE is set (e.g. "host.docker.internal") the host
+// portion of the URL is replaced.  Falls back to the original URL when not
+// running in Docker or the env var is unset.
+func RewriteLocalhostURL(rawURL string) string {
+	override := os.Getenv("DOCKER_HOST_OVERRIDE")
+	if override == "" {
+		// Auto-detect: if /proc/1/cgroup exists we're likely in a container
+		if _, err := os.Stat("/.dockerenv"); err == nil {
+			override = "host.docker.internal"
+		} else {
+			return rawURL
+		}
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	host := parsed.Hostname()
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		port := parsed.Port()
+		if port != "" {
+			parsed.Host = net.JoinHostPort(override, port)
+		} else {
+			parsed.Host = override
+		}
+		return parsed.String()
+	}
+
+	return rawURL
+}
+
+// isLocalhostURL returns true when the target is a loopback / private address.
+func isLocalhostURL(rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	host := parsed.Hostname()
+	return host == "localhost" || host == "127.0.0.1" || host == "::1" ||
+		strings.HasPrefix(host, "192.168.") ||
+		strings.HasPrefix(host, "10.") ||
+		strings.HasPrefix(host, "172.")
+}
+
+// httpClientFor returns an *http.Client that is appropriate for the target URL.
+// For localhost / private-network targets it disables TLS verification and
+// allows plain HTTP.
+func HttpClientFor(targetURL string) *http.Client {
+	if isLocalhostURL(targetURL) {
+		return &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+	}
+	return &http.Client{
+		Timeout: 30 * time.Second,
+	}
+}
 
 // ExecuteHTTPRequest executes an HTTP request and returns the response
 func ExecuteHTTPRequest(req *models.ExecuteRequest) (*models.ExecuteResponse, error) {
@@ -48,6 +116,9 @@ func ExecuteHTTPRequest(req *models.ExecuteRequest) (*models.ExecuteResponse, er
 		}
 	}
 
+	// Rewrite localhost URLs when running inside Docker
+	fullURL = RewriteLocalhostURL(fullURL)
+
 	// Create request
 	var bodyReader io.Reader
 	if req.Body != "" {
@@ -64,10 +135,8 @@ func ExecuteHTTPRequest(req *models.ExecuteRequest) (*models.ExecuteResponse, er
 		httpReq.Header.Set(key, value)
 	}
 
-	// Execute request
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	// Use a client appropriate for the target (relaxed TLS for localhost)
+	client := HttpClientFor(fullURL)
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, err

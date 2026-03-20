@@ -1,5 +1,5 @@
 {
-  "name": "postmanxodja-frontend",
+  "name": "api-tester-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,10 +10,15 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@types/canvas-confetti": "^1.9.0",
     "axios": "^1.6.0",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.35.2",
+    "lucide-react": "^0.577.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.0",
+    "react-simple-code-editor": "^0.14.1",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

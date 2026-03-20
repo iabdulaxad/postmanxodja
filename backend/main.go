@@ -37,7 +37,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000", "https://postbaby.uz", "https://www.postbaby.uz"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key", "x-api-key"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Disposition"},
 		AllowCredentials: true,
 	}))
@@ -83,6 +83,7 @@ func main() {
 
 		// Request execution (not team-scoped, uses environment_id in body)
 		api.POST("/requests/execute", handlers.ExecuteRequest)
+		api.POST("/requests/execute-multipart", handlers.ExecuteMultipartRequest)
 
 		// Saved tabs (user-scoped)
 		api.GET("/tabs", handlers.GetSavedTabs)
@@ -113,6 +114,7 @@ func main() {
 			teamApi.GET("/collections/:id", handlers.GetCollection)
 			teamApi.GET("/collections/:id/export", handlers.ExportCollection)
 			teamApi.PUT("/collections/:id", handlers.UpdateCollection)
+			teamApi.PATCH("/collections/:id/environment", handlers.SetCollectionEnvironment)
 			teamApi.DELETE("/collections/:id", handlers.DeleteCollection)
 
 			// Team environments
@@ -120,6 +122,36 @@ func main() {
 			teamApi.POST("/environments", handlers.CreateEnvironment)
 			teamApi.PUT("/environments/:id", handlers.UpdateEnvironment)
 			teamApi.DELETE("/environments/:id", handlers.DeleteEnvironment)
+
+			// Team API keys management
+			teamApi.GET("/api-keys", handlers.GetAPIKeys)
+			teamApi.POST("/api-keys", handlers.CreateAPIKey)
+			teamApi.DELETE("/api-keys/:key_id", handlers.DeleteAPIKey)
+
+			// Team AI settings
+			teamApi.GET("/ai-settings", handlers.GetAISettings)
+			teamApi.PUT("/ai-settings", handlers.UpdateAISettings)
+			teamApi.DELETE("/ai-settings", handlers.DeleteAISettings)
+			teamApi.POST("/ai-analyze", handlers.AIAnalyzeDBML)
+		}
+	}
+
+	// Public API routes (authenticated via API key for third-party access)
+	publicApi := r.Group("/api/v1")
+	publicApi.Use(middleware.APIKeyMiddleware())
+	{
+		// Collections - read endpoints
+		publicApi.GET("/collections", handlers.PublicGetCollections)
+		publicApi.GET("/collections/:id", handlers.PublicGetCollection)
+		publicApi.GET("/collections/:id/raw", handlers.PublicGetCollectionRaw)
+
+		// Collections - write endpoints (require write permission)
+		writeApi := publicApi.Group("")
+		writeApi.Use(middleware.RequireWritePermission())
+		{
+			writeApi.POST("/collections", handlers.PublicCreateCollection)
+			writeApi.PUT("/collections/:id", handlers.PublicUpdateCollection)
+			writeApi.DELETE("/collections/:id", handlers.PublicDeleteCollection)
 		}
 	}
 

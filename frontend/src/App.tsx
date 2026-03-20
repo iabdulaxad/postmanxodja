@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { TeamProvider } from './contexts/TeamContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -11,10 +12,11 @@ import InviteAcceptPage from './pages/InviteAcceptPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <TeamProvider>
-          <Routes>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <TeamProvider>
+            <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -29,10 +31,11 @@ function App() {
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </TeamProvider>
-      </AuthProvider>
-    </BrowserRouter>
+            </Routes>
+          </TeamProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

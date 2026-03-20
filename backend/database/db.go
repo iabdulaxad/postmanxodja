@@ -32,6 +32,8 @@ func InitDB() error {
 		&models.Team{},
 		&models.TeamMember{},
 		&models.TeamInvite{},
+		&models.TeamAPIKey{},
+		&models.TeamAISettings{},
 		&models.Collection{},
 		&models.Environment{},
 		&models.SavedTab{},

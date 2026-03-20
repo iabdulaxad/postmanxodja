@@ -10,10 +10,11 @@ import TabsBar from '../components/TabsBar';
 import CurlImportModal from '../components/CurlImportModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CollectionSelector from '../components/CollectionSelector';
+import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
 import { useTeam } from '../contexts/TeamContext';
-import { getEnvironments, getSavedTabs, getCollection, updateCollection } from '../services/api';
-import type { ExecuteResponse, Environment, RequestTab } from '../types';
+import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment } from '../services/api';
+import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -34,14 +35,19 @@ export default function DashboardPage() {
   const [tabs, setTabs] = useState<RequestTab[]>([defaultTab]);
   const [activeTabId, setActiveTabId] = useState<string>(defaultTab.id);
   const [responses, setResponses] = useState<Map<string, ExecuteResponse>>(new Map());
+  const [sentRequests, setSentRequests] = useState<Map<string, SentRequest>>(new Map());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [collectionDataUpdate, setCollectionDataUpdate] = useState<{ collectionId: number; data: PostmanCollection; trigger: number } | null>(null);
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [responseCollapsed, setResponseCollapsed] = useState(false);
   const [curlImportOpen, setCurlImportOpen] = useState(false);
+  const [ucodeImportOpen, setUcodeImportOpen] = useState(false);
   const [activeCollectionId, setActiveCollectionId] = useState<number | null>(null);
   const [collectionSelectorOpen, setCollectionSelectorOpen] = useState(false);
   const [tabToSave, setTabToSave] = useState<RequestTab | null>(null);
+  const [closeTabAfterSave, setCloseTabAfterSave] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -60,11 +66,14 @@ export default function DashboardPage() {
     message: '',
     onConfirm: () => {},
   });
+  // Map of collectionId -> environmentId (persisted per-collection env selection)
+  const [collectionEnvMap, setCollectionEnvMap] = useState<Map<number, number | null>>(new Map());
   const { currentTeam, isLoading } = useTeam();
 
   // Get current active tab
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
   const currentResponse = responses.get(activeTabId) || null;
+  const currentSentRequest = sentRequests.get(activeTabId) || null;
 
   // Load tabs from database on mount
   useEffect(() => {
@@ -115,11 +124,79 @@ export default function DashboardPage() {
     }
   };
 
+  // Load collection-environment mappings when team changes
+  const loadCollectionEnvMap = useCallback(async () => {
+    if (!currentTeam) return;
+    try {
+      const collections = await getCollections(currentTeam.id);
+      const map = new Map<number, number | null>();
+      for (const col of collections) {
+        if (col.environment_id !== undefined) {
+          map.set(col.id, col.environment_id ?? null);
+        }
+      }
+      setCollectionEnvMap(map);
+    } catch (err) {
+      console.error('Failed to load collection env map:', err);
+    }
+  }, [currentTeam]);
+
+  useEffect(() => {
+    if (currentTeam) {
+      loadCollectionEnvMap();
+    } else {
+      setCollectionEnvMap(new Map());
+    }
+  }, [currentTeam?.id]);
+
+  // Compute initialEnvId for the active tab based on its collection
+  const initialEnvId = activeTab?.collectionId
+    ? collectionEnvMap.get(activeTab.collectionId) ?? undefined
+    : undefined;
+
+  // Handle environment change for a collection
+  const handleCollectionEnvChange = useCallback(async (envId: number | undefined) => {
+    if (!currentTeam || !activeTab?.collectionId) return;
+    const environmentId = envId ?? null;
+    try {
+      await setCollectionEnvironment(currentTeam.id, activeTab.collectionId, environmentId);
+      setCollectionEnvMap(prev => {
+        const next = new Map(prev);
+        next.set(activeTab.collectionId!, environmentId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to save collection environment:', err);
+    }
+  }, [currentTeam, activeTab?.collectionId]);
+
   const handleImportSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
+    // Reload environments and collection-env map in case import created a new environment
+    loadEnvironments();
+    loadCollectionEnvMap();
   };
 
+  const handleUCodeImport = useCallback(async (collectionJSON: string) => {
+    if (!currentTeam) return;
+    try {
+      await importCollection(currentTeam.id, collectionJSON);
+      setRefreshTrigger(prev => prev + 1);
+      loadEnvironments();
+      loadCollectionEnvMap();
+    } catch (err) {
+      console.error('Failed to import UCode collection:', err);
+    }
+  }, [currentTeam, loadCollectionEnvMap]);
+
+  const toggleMobileSidebar = useCallback(() => {
+    setMobileSidebarOpen(prev => !prev);
+  }, []);
+
   const handleRequestSelect = useCallback((request: any) => {
+    // Close mobile sidebar when selecting a request
+    setMobileSidebarOpen(false);
+
     // Track which collection is currently active
     if (request.collectionId) {
       setActiveCollectionId(request.collectionId);
@@ -187,11 +264,12 @@ export default function DashboardPage() {
     };
 
     if (emptyTab) {
-      // Reuse existing empty tab
+      // Reuse existing empty tab - generate new ID to force RequestBuilder remount
+      const newId = generateId();
       setTabs(prev => prev.map(tab =>
-        tab.id === emptyTab.id ? { ...tab, ...requestData } : tab
+        tab.id === emptyTab.id ? { ...tab, ...requestData, id: newId } : tab
       ));
-      setActiveTabId(emptyTab.id);
+      setActiveTabId(newId);
     } else {
       // Create new tab for this request
       const newTab: RequestTab = {
@@ -264,8 +342,9 @@ export default function DashboardPage() {
     }
   }, [tabs]);
 
-  const handleResponse = useCallback((resp: ExecuteResponse) => {
+  const handleResponse = useCallback((resp: ExecuteResponse, sentReq: SentRequest) => {
     setResponses(prev => new Map(prev).set(activeTabId, resp));
+    setSentRequests(prev => new Map(prev).set(activeTabId, sentReq));
   }, [activeTabId]);
 
   const handleTabUpdate = useCallback((updates: Partial<RequestTab>) => {
@@ -411,8 +490,8 @@ export default function DashboardPage() {
         } : t
       ));
 
-      // Refresh collections
-      setRefreshTrigger(prev => prev + 1);
+      // Update only the affected collection in sidebar (no full refresh)
+      setCollectionDataUpdate({ collectionId, data: updatedCollection, trigger: Date.now() });
 
       return true;
     } catch (err) {
@@ -422,30 +501,126 @@ export default function DashboardPage() {
   }, [currentTeam]);
 
   const handleSaveToCollection = useCallback(async () => {
-    await saveTabToCollection(activeTab);
+    // If tab has a collection source, save directly to it
+    if (activeTab.collectionId && activeTab.itemPath) {
+      await saveTabToCollection(activeTab);
+    } else {
+      // For new tabs without collection, show selector to choose where to save
+      setTabToSave(activeTab);
+      setCollectionSelectorOpen(true);
+    }
   }, [activeTab, saveTabToCollection]);
+
+  // Save current response as an example in the collection
+  const handleSaveResponse = useCallback(async (name: string) => {
+    if (!activeTab.collectionId || !activeTab.itemPath || !currentTeam) return;
+
+    const response = responses.get(activeTabId);
+    const sentRequest = sentRequests.get(activeTabId);
+    if (!response) return;
+
+    try {
+      const collectionResult = await getCollection(currentTeam.id, activeTab.collectionId);
+      const collection = collectionResult.collection;
+
+      // Build the saved response in Postman format
+      const savedResponse: PostmanResponse = {
+        name,
+        originalRequest: sentRequest ? {
+          method: sentRequest.method,
+          url: sentRequest.url,
+          header: Object.entries(sentRequest.headers || {}).map(([key, value]) => ({
+            key,
+            value,
+          })),
+          body: sentRequest.body ? { mode: 'raw', raw: sentRequest.body } : undefined,
+        } : undefined,
+        status: response.status_text || `${response.status}`,
+        code: response.status,
+        header: Object.entries(response.headers || {}).map(([key, value]) => ({
+          key,
+          value,
+        })),
+        body: response.body,
+        responseTime: response.time,
+      };
+
+      // Navigate to the item and add the response
+      const pathParts = activeTab.itemPath.split('/');
+      const requestName = pathParts[pathParts.length - 1];
+      const folderPath = pathParts.slice(0, -1);
+
+      const addResponseToItems = (items: any[], currentPath: string[]): any[] => {
+        if (currentPath.length === 0) {
+          return items.map(item => {
+            if (item.name === requestName && item.request) {
+              const existingResponses = item.response || [];
+              return {
+                ...item,
+                response: [...existingResponses, savedResponse],
+              };
+            }
+            return item;
+          });
+        }
+
+        return items.map(item => {
+          if (item.name === currentPath[0] && item.item) {
+            return {
+              ...item,
+              item: addResponseToItems(item.item, currentPath.slice(1)),
+            };
+          }
+          return item;
+        });
+      };
+
+      const updatedCollection = {
+        ...collection,
+        item: addResponseToItems(collection.item, folderPath),
+      };
+
+      await updateCollection(currentTeam.id, activeTab.collectionId, {
+        raw_json: JSON.stringify(updatedCollection),
+      });
+
+      // Update only the affected collection in sidebar (no full refresh)
+      setCollectionDataUpdate({ collectionId: activeTab.collectionId, data: updatedCollection, trigger: Date.now() });
+    } catch (err) {
+      console.error('Failed to save response:', err);
+      alert('Failed to save response to collection');
+    }
+  }, [activeTab, activeTabId, currentTeam, responses, sentRequests]);
 
   const handleCollectionSelect = useCallback(async (collectionId: number, folderPath: string[]) => {
     setCollectionSelectorOpen(false);
     if (tabToSave) {
       await saveTabToCollection(tabToSave, collectionId, folderPath);
-      // Close the tab after saving
-      const tabId = tabToSave.id;
-      setTabs(prev => {
-        const newTabs = prev.filter(t => t.id !== tabId);
-        if (tabId === activeTabId && newTabs.length > 0) {
-          const closedIndex = prev.findIndex(t => t.id === tabId);
-          const newActiveIndex = Math.min(closedIndex, newTabs.length - 1);
-          setActiveTabId(newTabs[newActiveIndex].id);
-        }
-        return newTabs;
-      });
-      setResponses(prev => {
-        const newResponses = new Map(prev);
-        newResponses.delete(tabId);
-        return newResponses;
-      });
+      // Only close the tab if requested (e.g., when closing tab with unsaved changes)
+      if (closeTabAfterSave) {
+        const tabId = tabToSave.id;
+        setTabs(prev => {
+          const newTabs = prev.filter(t => t.id !== tabId);
+          if (tabId === activeTabId && newTabs.length > 0) {
+            const closedIndex = prev.findIndex(t => t.id === tabId);
+            const newActiveIndex = Math.min(closedIndex, newTabs.length - 1);
+            setActiveTabId(newTabs[newActiveIndex].id);
+          }
+          return newTabs;
+        });
+        setResponses(prev => {
+          const newResponses = new Map(prev);
+          newResponses.delete(tabId);
+          return newResponses;
+        });
+        setSentRequests(prev => {
+          const newRequests = new Map(prev);
+          newRequests.delete(tabId);
+          return newRequests;
+        });
+      }
       setTabToSave(null);
+      setCloseTabAfterSave(false);
     }
   }, [tabToSave, saveTabToCollection, activeTabId]);
 
@@ -463,11 +638,16 @@ export default function DashboardPage() {
         }
         return newTabs;
       });
-      // Remove response for closed tab
+      // Remove response and request for closed tab
       setResponses(prev => {
         const newResponses = new Map(prev);
         newResponses.delete(tabId);
         return newResponses;
+      });
+      setSentRequests(prev => {
+        const newRequests = new Map(prev);
+        newRequests.delete(tabId);
+        return newRequests;
       });
     };
 
@@ -495,6 +675,7 @@ export default function DashboardPage() {
           if (!tabToClose.itemPath) {
             // Show collection selector for new tabs to let user choose where to save
             setTabToSave(tabToClose);
+            setCloseTabAfterSave(true); // Close tab after saving when triggered from close button
             setCollectionSelectorOpen(true);
           } else if (tabToClose.collectionId) {
             // Existing tab with collection, save directly
@@ -512,24 +693,111 @@ export default function DashboardPage() {
     }
   }, [activeTabId, tabs, saveTabToCollection]);
 
+  // Load a saved response into a new tab with original request + response
+  const handleLoadSavedResponse = useCallback((savedResponse: PostmanResponse, collectionId: number, itemPath: string, responseIndex: number) => {
+    // Check if this saved response is already open in a tab
+    const existingTab = tabs.find(tab =>
+      tab.collectionId === collectionId &&
+      tab.itemPath === itemPath &&
+      tab.savedResponseIndex === responseIndex
+    );
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+
+    // Extract original request data
+    const origReq = savedResponse.originalRequest;
+    const origUrl = origReq
+      ? (typeof origReq.url === 'string'
+          ? origReq.url
+          : (origReq.url as any)?.raw || '')
+      : '';
+    const origHeaders: Record<string, string> = origReq
+      ? Object.fromEntries((origReq.header || []).map(h => [h.key, h.value]))
+      : {};
+    const origBody = origReq?.body?.raw || '';
+    const origMethod = origReq?.method || 'GET';
+    const origQueryParams: Record<string, string> = {};
+    if (origReq && typeof origReq.url === 'object' && origReq.url && 'query' in origReq.url) {
+      const queryArr = (origReq.url as any).query || [];
+      for (const q of queryArr) {
+        if (q.key && !q.disabled) origQueryParams[q.key] = q.value || '';
+      }
+    }
+
+    // Create a new tab with the original request loaded
+    const newTabId = generateId();
+    const newTab: RequestTab = {
+      id: newTabId,
+      name: `${savedResponse.name} (${origMethod})`,
+      method: origMethod,
+      url: origUrl,
+      headers: origHeaders,
+      body: origBody,
+      queryParams: origQueryParams,
+      collectionId,
+      itemPath,
+      savedResponseIndex: responseIndex,
+    };
+
+    setTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTabId);
+
+    // Build the SentRequest for the Response Viewer "Request Details" tab
+    const sentReq: SentRequest = {
+      method: origMethod,
+      url: origUrl,
+      headers: origHeaders,
+      body: origBody,
+      bodyType: (origReq?.body?.mode as any) || 'none',
+      queryParams: origQueryParams,
+      timestamp: Date.now(),
+    };
+
+    // Build the ExecuteResponse from the saved response
+    const response: ExecuteResponse = {
+      status: savedResponse.code,
+      status_text: savedResponse.status,
+      headers: Object.fromEntries(
+        (savedResponse.header || []).map(h => [h.key, h.value])
+      ),
+      body: savedResponse.body,
+      time: savedResponse.responseTime || 0,
+    };
+
+    // Use setTimeout so state from setTabs/setActiveTabId settles first
+    setTimeout(() => {
+      setResponses(prev => new Map(prev).set(newTabId, response));
+      setSentRequests(prev => new Map(prev).set(newTabId, sentReq));
+    }, 0);
+  }, [tabs]);
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-dvh bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-dvh bg-background overflow-hidden">
       {/* cURL Import Modal */}
       <CurlImportModal
         isOpen={curlImportOpen}
         onClose={() => setCurlImportOpen(false)}
         onImport={handleCurlImport}
+      />
+
+      {/* UCode Import Modal */}
+      <UCodeImportModal
+        isOpen={ucodeImportOpen}
+        onClose={() => setUcodeImportOpen(false)}
+        onImport={handleUCodeImport}
       />
 
       {/* Confirm Modal */}
@@ -557,25 +825,62 @@ export default function DashboardPage() {
         }}
       />
 
-      {/* Resizable Sidebar */}
-      <HorizontalSplitter
-        initialWidth={320}
-        minWidth={200}
-        maxWidth={500}
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      >
-        <CollectionImporter onImportSuccess={handleImportSuccess} />
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <CollectionList onRequestSelect={handleRequestSelect} refreshTrigger={refreshTrigger} />
+      {/* Mobile Sidebar Drawer */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="mobile-sidebar-backdrop fixed inset-0" onClick={() => setMobileSidebarOpen(false)} />
+          <div className="mobile-sidebar-drawer relative z-10 flex flex-col h-full w-[85vw] max-w-80 bg-card shadow-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="font-semibold text-foreground">Collections</span>
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-2 text-muted-foreground hover:bg-accent rounded-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <CollectionImporter onImportSuccess={handleImportSuccess} onUCodeImport={() => setUcodeImportOpen(true)} />
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <CollectionList
+                onRequestSelect={handleRequestSelect}
+                onLoadSavedResponse={handleLoadSavedResponse}
+                refreshTrigger={refreshTrigger}
+                collectionDataUpdate={collectionDataUpdate}
+              />
+            </div>
+            <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
+          </div>
         </div>
-        <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
-      </HorizontalSplitter>
+      )}
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex">
+        <HorizontalSplitter
+          initialWidth={320}
+          minWidth={200}
+          maxWidth={500}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        >
+          <CollectionImporter onImportSuccess={handleImportSuccess} onUCodeImport={() => setUcodeImportOpen(true)} />
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <CollectionList
+              onRequestSelect={handleRequestSelect}
+              onLoadSavedResponse={handleLoadSavedResponse}
+              refreshTrigger={refreshTrigger}
+              collectionDataUpdate={collectionDataUpdate}
+            />
+          </div>
+          <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
+        </HorizontalSplitter>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
         {/* Header */}
-        <Header />
+        <Header onToggleSidebar={toggleMobileSidebar} />
 
         {/* Tabs Bar */}
         <TabsBar
@@ -590,19 +895,19 @@ export default function DashboardPage() {
 
         {/* Content Area */}
         {tabs.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center max-w-md p-8">
-              <svg className="w-24 h-24 mx-auto mb-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex-1 flex items-center justify-center bg-background p-4">
+            <div className="text-center max-w-md">
+              <svg className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h2 className="text-2xl font-semibold text-gray-700 mb-3">No Tabs Open</h2>
-              <p className="text-gray-500 mb-6">
+              <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-2 md:mb-3">No Tabs Open</h2>
+              <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
                 Start by creating a new request or importing from cURL
               </p>
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={handleNewTab}
-                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2"
+                  className="px-5 py-2.5 md:px-6 md:py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -611,7 +916,7 @@ export default function DashboardPage() {
                 </button>
                 <button
                   onClick={handleImportCurl}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium flex items-center gap-2 border border-gray-300"
+                  className="px-5 py-2.5 md:px-6 md:py-3 bg-muted hover:bg-accent text-foreground rounded-lg font-medium flex items-center justify-center gap-2 border border-border"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -636,7 +941,10 @@ export default function DashboardPage() {
                 initialHeaders={activeTab?.headers || {}}
                 initialBody={activeTab?.body || ''}
                 initialQueryParams={activeTab?.queryParams || {}}
+                initialName={activeTab?.name || 'Untitled'}
                 environments={environments}
+                initialEnvId={initialEnvId}
+                onEnvironmentChange={activeTab?.collectionId ? handleCollectionEnvChange : undefined}
                 onResponse={handleResponse}
                 onUpdate={handleTabUpdate}
                 hasCollectionSource={!!activeTab?.collectionId}
@@ -644,7 +952,12 @@ export default function DashboardPage() {
               />
             }
             bottomPanel={
-              <ResponseViewer response={currentResponse} />
+              <ResponseViewer
+                response={currentResponse}
+                request={currentSentRequest}
+                onSaveResponse={handleSaveResponse}
+                canSaveResponse={!!(activeTab?.collectionId && activeTab?.itemPath && currentResponse)}
+              />
             }
           />
         )}

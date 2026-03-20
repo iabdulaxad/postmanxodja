@@ -71,69 +71,72 @@ export default function TeamMembersModal({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/30" onClick={onClose} />
+        <div className="relative bg-card shadow-xl w-full h-full md:h-auto md:rounded-lg md:max-w-lg md:mx-4 md:max-h-[80vh] flex flex-col">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
-            <p className="text-sm text-gray-500">{teamName}</p>
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">Team Members</h2>
+            <p className="text-sm text-muted-foreground">{teamName}</p>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
                 {error}
               </div>
             )}
 
             {loading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading members...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading members...</p>
               </div>
             ) : (
               <>
                 {/* Members List */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
                     Members ({members.length})
                   </h3>
                   {members.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-accent/50 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-medium">
                           {member.user?.name?.charAt(0).toUpperCase() ||
                             member.user?.email?.charAt(0).toUpperCase() ||
                             '?'}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">
+                          <p className="font-medium text-foreground">
                             {member.user?.name || member.user?.email}
                             {member.user_id === user?.id && (
-                              <span className="text-gray-500 text-sm ml-1">(You)</span>
+                              <span className="text-muted-foreground text-sm ml-1">(You)</span>
                             )}
                           </p>
-                          <p className="text-sm text-gray-500">{member.user?.email}</p>
+                          <p className="text-sm text-muted-foreground">{member.user?.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`px-2 py-1 text-xs rounded-full ${
+                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                             member.role === 'owner'
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-gray-100 text-gray-600'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                           }`}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            member.role === 'owner' ? 'bg-purple-500' : 'bg-green-500'
+                          }`}></span>
                           {member.role}
                         </span>
                         {isOwner && member.role !== 'owner' && member.user_id !== user?.id && (
                           <button
                             onClick={() => setMemberToRemove(member)}
-                            className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                            className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
                             title="Remove member"
                           >
                             <svg
@@ -159,17 +162,17 @@ export default function TeamMembersModal({
                 {/* Pending Invites */}
                 {isOwner && pendingInvites.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       Pending Invites ({pendingInvites.length})
                     </h3>
                     <div className="space-y-2">
                       {pendingInvites.map((invite) => (
                         <div
                           key={invite.id}
-                          className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100"
+                          className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white font-medium">
+                            <div className="w-10 h-10 bg-muted-foreground rounded-full flex items-center justify-center text-background font-medium">
                               <svg
                                 className="w-5 h-5"
                                 fill="none"
@@ -185,8 +188,11 @@ export default function TeamMembersModal({
                               </svg>
                             </div>
                             <div>
-                              <p className="font-medium text-gray-800">{invite.invitee_email}</p>
-                              <p className="text-sm text-yellow-600">Invite pending</p>
+                              <p className="font-medium text-foreground">{invite.invitee_email}</p>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                Pending
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -199,10 +205,10 @@ export default function TeamMembersModal({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-6 py-4 border-t border-border flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-accent hover:bg-accent/80 rounded-lg transition-colors"
             >
               Close
             </button>

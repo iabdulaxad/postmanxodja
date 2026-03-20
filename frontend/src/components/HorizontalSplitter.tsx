@@ -66,7 +66,7 @@ export default function HorizontalSplitter({
     <div ref={containerRef} className="flex h-full relative">
       {/* Sidebar Content */}
       <div
-        className="flex flex-col bg-white border-r border-gray-200 shadow-sm  overflow-hidden"
+        className="flex flex-col bg-card border-r border-border shadow-sm  overflow-hidden"
         style={{ width: collapsed ? 0 : width }}
       >
         {!collapsed && children}
@@ -78,7 +78,7 @@ export default function HorizontalSplitter({
         {!collapsed && (
           <div
             className={`
-              w-1 h-full cursor-col-resize hover:bg-blue-400               ${isDragging ? 'bg-blue-500' : 'bg-gray-200'}
+              w-1 h-full cursor-col-resize hover:bg-primary               ${isDragging ? 'bg-primary' : 'bg-muted'}
             `}
             onMouseDown={handleMouseDown}
           />
@@ -87,12 +87,12 @@ export default function HorizontalSplitter({
         {/* Toggle Button */}
         <button
           onClick={toggleCollapse}
-          className="absolute top-1/2 -translate-y-1/2 z-10 w-6 h-12 bg-white border border-gray-300 rounded-r-lg shadow-sm hover:bg-gray-50 flex items-center justify-center transition-colors"
+          className="absolute top-1/2 -translate-y-1/2 z-10 w-6 h-12 bg-card border border-border rounded-r-lg shadow-sm hover:bg-accent flex items-center justify-center transition-colors"
           style={{ left: collapsed ? 0 : -3 }}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
-            className={`w-4 h-4 text-gray-500  ${collapsed ? '' : 'rotate-180'}`}
+            className={`w-4 h-4 text-muted-foreground  ${collapsed ? '' : 'rotate-180'}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

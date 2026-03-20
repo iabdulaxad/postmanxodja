@@ -93,5 +93,10 @@ func DeleteEnvironment(c *gin.Context) {
 		return
 	}
 
+	// Clear environment_id from collections that referenced this environment
+	database.GetDB().Model(&models.Collection{}).
+		Where("environment_id = ? AND team_id = ?", envID, teamID).
+		Update("environment_id", nil)
+
 	c.JSON(http.StatusOK, gin.H{"message": "Environment deleted successfully"})
 }

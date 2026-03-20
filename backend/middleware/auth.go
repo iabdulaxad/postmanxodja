@@ -4,7 +4,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"postmanxodja/database"
+	"postmanxodja/models"
 	"postmanxodja/services"
 
 	"github.com/gin-gonic/gin"
@@ -72,6 +75,60 @@ func TeamOwnerMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		c.Next()
+	}
+}
+
+// APIKeyMiddleware authenticates requests using API keys for third-party access
+func APIKeyMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		apiKey := c.GetHeader("X-API-Key")
+		if apiKey == "" {
+			// Also check Authorization header with "ApiKey" scheme
+			authHeader := c.GetHeader("Authorization")
+			if strings.HasPrefix(authHeader, "ApiKey ") {
+				apiKey = strings.TrimPrefix(authHeader, "ApiKey ")
+			}
+		}
+
+		if apiKey == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
+			return
+		}
+
+		// Find the API key in database
+		var keyRecord models.TeamAPIKey
+		if err := database.GetDB().Where("key = ?", apiKey).First(&keyRecord).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+			return
+		}
+
+		// Check if key is expired
+		if keyRecord.ExpiresAt != nil && keyRecord.ExpiresAt.Before(time.Now()) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "API key has expired"})
+			return
+		}
+
+		// Update last used timestamp
+		now := time.Now()
+		database.GetDB().Model(&keyRecord).Update("last_used_at", now)
+
+		// Set team_id and permissions in context
+		c.Set("team_id", keyRecord.TeamID)
+		c.Set("api_key_id", keyRecord.ID)
+		c.Set("api_key_permissions", keyRecord.Permissions)
+		c.Next()
+	}
+}
+
+// RequireWritePermission checks if the API key has write permissions
+func RequireWritePermission() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		permissions := c.GetString("api_key_permissions")
+		if permissions != "write" && permissions != "read_write" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Write permission required"})
+			return
+		}
 		c.Next()
 	}
 }

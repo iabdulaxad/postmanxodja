@@ -58,6 +58,19 @@ export const getStoredTokens = () => {
   };
 };
 
+export const getCachedUser = (): User | null => {
+  try {
+    const cached = localStorage.getItem('cached_user');
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const cacheUser = (user: User) => {
+  localStorage.setItem('cached_user', JSON.stringify(user));
+};
+
 export const storeTokens = (accessToken: string, refreshToken: string) => {
   localStorage.setItem('access_token', accessToken);
   localStorage.setItem('refresh_token', refreshToken);
@@ -66,6 +79,28 @@ export const storeTokens = (accessToken: string, refreshToken: string) => {
 export const clearTokens = () => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
+  localStorage.removeItem('cached_user');
+};
+
+/**
+ * Extract minimal user info from a JWT access token.
+ * This is used as a fallback when offline and no cached user exists.
+ * Returns null if the token can't be decoded.
+ */
+export const parseUserFromToken = (token: string): User | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return {
+      id: payload.user_id || payload.sub || 0,
+      email: payload.email || '',
+      name: payload.name || payload.email || 'User',
+      created_at: '',
+    };
+  } catch {
+    return null;
+  }
 };
 
 // Google OAuth

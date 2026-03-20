@@ -59,6 +59,7 @@ export interface Collection {
   name: string;
   description: string;
   raw_json?: string;
+  environment_id?: number | null;
   team_id?: number;
   created_at: string;
 }
@@ -79,7 +80,19 @@ export interface PostmanCollection {
 export interface PostmanItem {
   name: string;
   request?: PostmanRequest;
+  response?: PostmanResponse[];
   item?: PostmanItem[];
+}
+
+// Saved example response (Postman collection v2.1 format)
+export interface PostmanResponse {
+  name: string;
+  originalRequest?: PostmanRequest;
+  status: string;
+  code: number;
+  header?: PostmanKeyValue[];
+  body: string;
+  responseTime?: number;
 }
 
 export interface PostmanRequest {
@@ -134,11 +147,22 @@ export interface PostmanVariable {
   type?: string;
 }
 
+export type BodyType = 'none' | 'raw' | 'form-data' | 'x-www-form-urlencoded';
+
+export interface FormDataItem {
+  key: string;
+  value: string;
+  type: 'text' | 'file';
+  file?: File;
+}
+
 export interface ExecuteRequest {
   method: string;
   url: string;
   headers: Record<string, string>;
   body: string;
+  body_type?: BodyType;
+  form_data?: FormDataItem[];
   query_params: Record<string, string>;
   environment_id?: number;
 }
@@ -149,6 +173,23 @@ export interface ExecuteResponse {
   headers: Record<string, string>;
   body: string;
   time: number;
+}
+
+// Request info that was sent (for display in response viewer like Swagger)
+export interface SentRequest {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+  bodyType?: BodyType;
+  queryParams: Record<string, string>;
+  timestamp: number;
+}
+
+// Combined response with request info for Swagger-like display
+export interface ApiCallResult {
+  request: SentRequest;
+  response: ExecuteResponse;
 }
 
 export interface Environment {
@@ -167,10 +208,13 @@ export interface RequestTab {
   url: string;
   headers: Record<string, string>;
   body: string;
+  bodyType?: BodyType;
+  formData?: FormDataItem[];
   queryParams: Record<string, string>;
   request?: PostmanRequest;
   isDirty?: boolean;
   // Collection source info for syncing changes back
   collectionId?: number;
   itemPath?: string; // Path to the item in the collection (e.g., "folder1/folder2/request")
+  savedResponseIndex?: number; // Index of saved response this tab was opened from
 }

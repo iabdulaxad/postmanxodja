@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -35,44 +35,69 @@ export default function ConfirmModal({
     }
   }, [isOpen]);
 
-  useEffect(() => {
+  // Focus trap + Escape handler
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isOpen) return;
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && cancelText) {
-        onCancel();
+    if (e.key === 'Escape') {
+      onCancel();
+      return;
+    }
+
+    if (e.key === 'Tab' && modalRef.current) {
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, cancelText, onCancel]);
+    }
+  }, [isOpen, onCancel]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   if (!isOpen) return null;
 
   const variantStyles = {
-    danger: 'bg-red-500 hover:bg-red-600',
-    warning: 'bg-yellow-500 hover:bg-yellow-600',
-    info: 'bg-blue-500 hover:bg-blue-600',
+    danger: 'bg-destructive hover:bg-destructive/90',
+    warning: 'bg-muted-foreground hover:bg-muted-foreground/90',
+    info: 'bg-primary hover:bg-primary/90',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
       <div
-        className="fixed inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 bg-slate-900/30"
         onClick={cancelText ? onCancel : undefined}
       />
       <div
         ref={modalRef}
         tabIndex={-1}
-        className="relative bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 outline-none"
+        className="relative bg-card shadow-xl p-4 sm:p-6 w-[calc(100%-2rem)] sm:w-full rounded-lg max-w-md mx-4 outline-none"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
+        <h3 id="confirm-modal-title" className="text-base sm:text-lg font-semibold text-foreground mb-2">{title}</h3>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">{message}</p>
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           {cancelText && (
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground bg-accent hover:bg-accent/80 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
             >
               {cancelText}
             </button>
@@ -80,14 +105,14 @@ export default function ConfirmModal({
           {thirdActionText && onThirdAction && (
             <button
               onClick={onThirdAction}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${variantStyles[thirdActionVariant]}`}
+              className={`px-4 py-2 text-sm font-medium text-destructive-foreground rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring ${variantStyles[thirdActionVariant]}`}
             >
               {thirdActionText}
             </button>
           )}
           <button
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${variantStyles[variant]}`}
+            className={`px-4 py-2 text-sm font-medium text-destructive-foreground rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring ${variantStyles[variant]}`}
           >
             {confirmText}
           </button>

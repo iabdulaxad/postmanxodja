@@ -32,18 +32,35 @@ export default function ResizableSplitter({
     setIsDragging(true);
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const updateHeight = useCallback(
+    (clientY: number) => {
       if (!isDragging || !containerRef.current) return;
 
       const container = containerRef.current;
       const containerRect = container.getBoundingClientRect();
-      const newTopHeight = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+      const newTopHeight = ((clientY - containerRect.top) / containerRect.height) * 100;
 
       const clampedHeight = Math.min(Math.max(newTopHeight, minTopHeight), maxTopHeight);
       setTopHeight(clampedHeight);
     },
     [isDragging, minTopHeight, maxTopHeight]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => updateHeight(e.clientY),
+    [updateHeight]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (e.touches.length > 0) updateHeight(e.touches[0].clientY);
+    },
+    [updateHeight]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -54,6 +71,8 @@ export default function ResizableSplitter({
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleMouseUp);
       document.body.style.cursor = 'row-resize';
       document.body.style.userSelect = 'none';
     }
@@ -61,16 +80,18 @@ export default function ResizableSplitter({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleMouseUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleTouchMove, handleMouseUp]);
 
   return (
     <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
       {/* Top Panel */}
       <div
-        className={`overflow-y-auto bg-white ${collapsed ? 'flex-1' : 'flex-shrink-0'}`}
+        className={`overflow-y-auto bg-card ${collapsed ? 'flex-1' : 'flex-shrink-0'}`}
         style={{ height: collapsed ? undefined : `${topHeight}%` }}
       >
         {topPanel}
@@ -81,27 +102,28 @@ export default function ResizableSplitter({
         <div className="relative flex items-center">
           <div
             className={`
-              h-2 flex-1 cursor-row-resize
+              h-5 md:h-2 flex-1 cursor-row-resize
               flex items-center justify-center
-              bg-gray-100 border-y border-gray-200
-              hover:bg-blue-100
-              ${isDragging ? 'bg-blue-200' : ''}
+              bg-muted border-y border-border
+              hover:bg-primary/20
+              ${isDragging ? 'bg-primary/30' : ''}
             `}
             onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
             style={{ transition: 'none' }}
           >
             <div className="flex gap-1">
-              <div className="w-8 h-0.5 bg-gray-400 rounded-full" />
+              <div className="w-8 h-0.5 bg-muted-foreground rounded-full" />
             </div>
           </div>
           <button
             onClick={toggleCollapse}
-            className="absolute left-1/2 -translate-x-1/2 z-10 h-6 w-12 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 flex items-center justify-center"
+            className="absolute left-1/2 -translate-x-1/2 z-10 h-8 w-14 md:h-6 md:w-12 bg-card border border-border rounded-lg shadow-sm hover:bg-accent flex items-center justify-center"
             style={{ top: -3, transition: 'none' }}
             title="Collapse response panel"
           >
             <svg
-              className="w-4 h-4 text-gray-500 rotate-90"
+              className="w-4 h-4 text-muted-foreground rotate-90"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -115,7 +137,7 @@ export default function ResizableSplitter({
       {/* Bottom Panel */}
       {!collapsed && (
         <div
-          className="bg-gray-50 min-h-0 overflow-hidden"
+          className="bg-background min-h-0 overflow-hidden"
           style={{ height: `${100 - topHeight}%` }}
         >
           {bottomPanel}
@@ -124,10 +146,10 @@ export default function ResizableSplitter({
 
       {/* Expand Button (when collapsed) */}
       {collapsed && (
-        <div className="relative flex items-center justify-center border-t-2 border-gray-300 bg-gray-100 py-2 flex-shrink-0">
+        <div className="relative flex items-center justify-center border-t-2 border-border bg-muted py-2 flex-shrink-0">
           <button
             onClick={toggleCollapse}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg shadow-sm hover:bg-accent text-muted-foreground hover:text-foreground"
             style={{ transition: 'none' }}
             title="Expand response panel"
           >

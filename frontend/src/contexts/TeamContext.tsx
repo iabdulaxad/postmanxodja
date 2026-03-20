@@ -25,6 +25,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const fetchedTeams = await teamService.getTeams();
       setTeams(fetchedTeams);
 
+      // Cache teams for offline use
+      localStorage.setItem('cached_teams', JSON.stringify(fetchedTeams));
+
       // Restore last selected team or pick first one
       const lastTeamId = localStorage.getItem('current_team_id');
       if (lastTeamId) {
@@ -40,6 +43,27 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to load teams:', error);
+      // Offline fallback: restore teams from cache
+      const cachedTeamsStr = localStorage.getItem('cached_teams');
+      if (cachedTeamsStr) {
+        try {
+          const cachedTeams = JSON.parse(cachedTeamsStr) as Team[];
+          setTeams(cachedTeams);
+          const lastTeamId = localStorage.getItem('current_team_id');
+          if (lastTeamId) {
+            const savedTeam = cachedTeams.find((t) => t.id === parseInt(lastTeamId));
+            if (savedTeam) {
+              setCurrentTeamState(savedTeam);
+              return;
+            }
+          }
+          if (cachedTeams.length > 0 && !currentTeam) {
+            setCurrentTeamState(cachedTeams[0]);
+          }
+        } catch {
+          // Corrupted cache, ignore
+        }
+      }
     } finally {
       setIsLoading(false);
     }
