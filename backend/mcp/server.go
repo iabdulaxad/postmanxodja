@@ -24,12 +24,34 @@ func NewServer() *mcpserver.StreamableHTTPServer {
 		mcpserver.WithToolCapabilities(false),
 	)
 
+	// Collection CRUD
 	s.AddTool(listCollectionsTool(), listCollectionsHandler)
 	s.AddTool(getCollectionTool(), getCollectionHandler)
 	s.AddTool(createCollectionTool(), createCollectionHandler)
 	s.AddTool(updateCollectionTool(), updateCollectionHandler)
 	s.AddTool(deleteCollectionTool(), deleteCollectionHandler)
+	s.AddTool(exportCollectionTool(), exportCollectionHandler)
+	s.AddTool(setCollectionEnvironmentTool(), setCollectionEnvironmentHandler)
+
+	// Folders & requests inside a collection
+	s.AddTool(listFoldersTool(), listFoldersHandler)
+	s.AddTool(createFolderTool(), createFolderHandler)
+	s.AddTool(renameFolderTool(), renameFolderHandler)
+	s.AddTool(deleteFolderTool(), deleteFolderHandler)
+	s.AddTool(addRequestTool(), addRequestHandler)
+	s.AddTool(updateRequestTool(), updateRequestHandler)
+	s.AddTool(deleteRequestTool(), deleteRequestHandler)
+
+	// Environment CRUD
 	s.AddTool(listEnvironmentsTool(), listEnvironmentsHandler)
+	s.AddTool(createEnvironmentTool(), createEnvironmentHandler)
+	s.AddTool(getEnvironmentTool(), getEnvironmentHandler)
+	s.AddTool(updateEnvironmentTool(), updateEnvironmentHandler)
+	s.AddTool(deleteEnvironmentTool(), deleteEnvironmentHandler)
+	s.AddTool(setEnvVariableTool(), setEnvVariableHandler)
+	s.AddTool(deleteEnvVariableTool(), deleteEnvVariableHandler)
+
+	// Request execution
 	s.AddTool(executeRequestTool(), executeRequestHandler)
 
 	return mcpserver.NewStreamableHTTPServer(s, mcpserver.WithStateLess(true))
