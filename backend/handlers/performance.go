@@ -110,7 +110,7 @@ func runK6Test(testID uint, targetURL string) {
 		"--env", "TEST_ID="+strconv.Itoa(int(testID)),
 		scriptPath,
 	)
-	cmd.Env = append(os.Environ(), "K6_BROWSER_HEADLESS=true")
+	cmd.Env = os.Environ()
 
 	output, err := cmd.CombinedOutput()
 	log.Printf("k6 test %d output: %s", testID, string(output))
@@ -121,8 +121,8 @@ func runK6Test(testID uint, targetURL string) {
 		"status":   "completed",
 	}
 	if err != nil {
-		// 104 = thresholds not met, 108 = browser issue — still mark completed so Grafana shows data
-		if exitErr, ok := err.(*exec.ExitError); ok && (exitErr.ExitCode() == 104 || exitErr.ExitCode() == 108) {
+		// 104 = thresholds not met — test ran fine, data is in Grafana
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 104 {
 			update["status"] = "completed"
 		} else {
 			update["status"] = "failed"

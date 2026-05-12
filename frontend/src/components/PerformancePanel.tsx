@@ -91,7 +91,9 @@ export default function PerformancePanel() {
     );
   };
 
-  const grafanaDashboardUrl = `${grafanaUrl}/dashboards?orgId=1`;
+  const grafanaDashboardUrl = activeTest
+    ? `${grafanaUrl}/d/k6-load-testing-results/k6-load-testing-results?orgId=1&refresh=5s&from=now-5m&to=now`
+    : `${grafanaUrl}/dashboards?orgId=1`;
 
   return (
     <div className="flex flex-col h-full min-h-0">
