@@ -259,10 +259,15 @@ PROV_EOF
 
 mkdir -p /var/lib/grafana/dashboards
 
-# Download official k6 browser dashboard
-curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" \
-    -o /var/lib/grafana/dashboards/k6-browser.json 2>/dev/null || \
-    log_warn "Could not download k6 dashboard — import manually from grafana.com/dashboards/2587"
+# Download official k6 browser dashboard (18030) and wrap it for Grafana provisioning
+DASH_JSON=$(curl -sf "https://grafana.com/api/dashboards/18030/revisions/latest/download" 2>/dev/null)
+if [ -n "$DASH_JSON" ]; then
+    echo "{\"dashboard\": $DASH_JSON, \"overwrite\": true, \"folderId\": 0}" \
+        > /var/lib/grafana/dashboards/k6-browser.json
+    log_info "k6 browser dashboard downloaded"
+else
+    log_warn "Could not download k6 dashboard — import manually from grafana.com/dashboards/18030"
+fi
 
 chown -R grafana:grafana /var/lib/grafana/dashboards 2>/dev/null || true
 

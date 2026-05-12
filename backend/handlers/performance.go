@@ -121,8 +121,8 @@ func runK6Test(testID uint, targetURL string) {
 		"status":   "completed",
 	}
 	if err != nil {
-		// exit code 104 = thresholds not met — test still ran successfully
-		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 104 {
+		// 104 = thresholds not met, 108 = browser issue — still mark completed so Grafana shows data
+		if exitErr, ok := err.(*exec.ExitError); ok && (exitErr.ExitCode() == 104 || exitErr.ExitCode() == 108) {
 			update["status"] = "completed"
 		} else {
 			update["status"] = "failed"

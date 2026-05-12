@@ -91,7 +91,7 @@ export default function PerformancePanel() {
     );
   };
 
-  const grafanaDashboardUrl = `${grafanaUrl}/d/k6-browser/k6-browser-testing?orgId=1&refresh=5s&kiosk=tv`;
+  const grafanaDashboardUrl = `${grafanaUrl}/dashboards?orgId=1`;
 
   return (
     <div className="flex flex-col h-full min-h-0">
