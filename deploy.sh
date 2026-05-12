@@ -156,6 +156,43 @@ fi
 log_info "PostgreSQL configured successfully"
 
 #################################################
+# Install and Configure Grafana
+#################################################
+if ! command -v grafana-server &> /dev/null; then
+    log_info "Installing Grafana..."
+    apt-get install -y apt-transport-https software-properties-common wget
+    wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
+    apt-get update
+    apt-get install -y grafana
+else
+    log_info "Grafana already installed"
+fi
+
+log_info "Configuring Grafana..."
+cat > /etc/grafana/grafana.ini << 'GRAFANA_EOF'
+[server]
+http_port = 3001
+root_url = %(protocol)s://%(domain)s/grafana
+serve_from_sub_path = true
+
+[security]
+allow_embedding = true
+
+[auth.anonymous]
+enabled = true
+org_role = Viewer
+
+[users]
+allow_sign_up = false
+GRAFANA_EOF
+
+systemctl daemon-reload
+systemctl enable grafana-server
+systemctl restart grafana-server
+log_info "Grafana running on port 3001"
+
+#################################################
 # Create application directory
 #################################################
 log_info "Setting up application directory..."
@@ -373,6 +410,20 @@ server {
         proxy_cache off;
         proxy_read_timeout 86400s;
     }
+
+    # Grafana dashboard
+    location /grafana/ {
+        proxy_pass http://localhost:3001/grafana/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /grafana {
+        return 301 /grafana/;
+    }
 }
 EOF
 else
@@ -427,6 +478,20 @@ server {
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 86400s;
+    }
+
+    # Grafana dashboard
+    location /grafana/ {
+        proxy_pass http://localhost:3001/grafana/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /grafana {
+        return 301 /grafana/;
     }
 }
 EOF
@@ -501,6 +566,13 @@ if [ -f "/etc/systemd/system/postmanxodja-backend.service" ]; then
     else
         log_error "✗ Backend service is not running"
     fi
+fi
+
+# Check Grafana status
+if systemctl is-active --quiet grafana-server; then
+    log_info "✓ Grafana is running"
+else
+    log_error "✗ Grafana is not running"
 fi
 
 #################################################

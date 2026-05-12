@@ -41,6 +41,7 @@ export default function DashboardPage() {
     const [environments, setEnvironments] = useState<Environment[]>([]);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [showGrafana, setShowGrafana] = useState(false);
     const [responseCollapsed, setResponseCollapsed] = useState(false);
     const [curlImportOpen, setCurlImportOpen] = useState(false);
     const [ucodeImportOpen, setUcodeImportOpen] = useState(false);
@@ -850,6 +851,15 @@ export default function DashboardPage() {
                                 collectionDataUpdate={collectionDataUpdate}
                             />
                         </div>
+                        <button
+                            onClick={() => { setShowGrafana(v => !v); setMobileSidebarOpen(false); }}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                        >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Grafana
+                        </button>
                         <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                     </div>
                 </div>
@@ -873,6 +883,15 @@ export default function DashboardPage() {
                             collectionDataUpdate={collectionDataUpdate}
                         />
                     </div>
+                    <button
+                        onClick={() => setShowGrafana(v => !v)}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                    >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Grafana
+                    </button>
                     <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                 </HorizontalSplitter>
             </div>
@@ -882,7 +901,37 @@ export default function DashboardPage() {
                 {/* Header */}
                 <Header onToggleSidebar={toggleMobileSidebar} />
 
-                {/* Tabs Bar */}
+                {/* Grafana View */}
+                {showGrafana && (
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card flex-shrink-0">
+                            <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Grafana
+                            </span>
+                            <button
+                                onClick={() => setShowGrafana(false)}
+                                className="p-1 text-muted-foreground hover:bg-accent rounded"
+                                title="Close Grafana"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <iframe
+                            src={import.meta.env.VITE_GRAFANA_URL || '/grafana'}
+                            className="flex-1 w-full border-0"
+                            title="Grafana"
+                            allow="fullscreen"
+                        />
+                    </div>
+                )}
+
+                {/* Tabs + Request Area */}
+                {!showGrafana && <>
                 <TabsBar
                     tabs={tabs}
                     activeTabId={activeTabId}
@@ -961,6 +1010,7 @@ export default function DashboardPage() {
                         }
                     />
                 )}
+                </>}
             </div>
         </div>
     );
