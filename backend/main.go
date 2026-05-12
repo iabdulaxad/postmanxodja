@@ -1,3 +1,26 @@
+// @title           Postmanxodja API
+// @version         1.0
+// @description     Postman-like API testing platform. Authenticate with Bearer JWT for /api/* routes, or X-API-Key for /api/v1/* routes.
+// @termsOfService  https://postbaby.uz
+
+// @contact.name   Support
+// @contact.url    https://postbaby.uz
+
+// @license.name  MIT
+
+// @host      localhost:8080
+// @BasePath  /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer " followed by your JWT token.
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name X-API-Key
+// @description Team API key (prefix pmx_).
+
 package main
 
 import (
@@ -5,11 +28,16 @@ import (
 	"postmanxodja/config"
 	"postmanxodja/database"
 	"postmanxodja/handlers"
+	mcpmount "postmanxodja/mcp"
 	"postmanxodja/middleware"
+
+	_ "postmanxodja/docs"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -41,6 +69,9 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length", "Content-Disposition"},
 		AllowCredentials: true,
 	}))
+
+	// Swagger UI — available at /swagger/index.html
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health check endpoints
 	r.GET("/health", func(c *gin.Context) {
@@ -137,6 +168,16 @@ func main() {
 			teamApi.POST("/ai-analyze", handlers.AIAnalyzeDBML)
 		}
 	}
+
+	// MCP server — authenticated via API key, stateless streamable HTTP transport
+	// Mount at /mcp; clients connect with X-API-Key header
+	mcpHandler := mcpmount.GinHandler()
+	mcpGroup := r.Group("/mcp")
+	mcpGroup.Use(middleware.APIKeyMiddleware())
+	mcpGroup.Any("", gin.WrapH(mcpmount.ProxyHandler(mcpHandler)))
+	mcpGroup.Any("/*path", func(c *gin.Context) {
+		mcpmount.ProxyHandler(mcpHandler).ServeHTTP(c.Writer, c.Request)
+	})
 
 	// Public API routes (authenticated via API key for third-party access)
 	publicApi := r.Group("/api/v1")

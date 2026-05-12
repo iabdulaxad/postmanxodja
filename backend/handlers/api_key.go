@@ -150,7 +150,16 @@ func DeleteAPIKey(c *gin.Context) {
 // Public API endpoints (authenticated via API key)
 // ============================================================
 
-// PublicGetCollections returns all collections for the team
+// PublicGetCollections returns all collections for the team.
+//
+// @Summary     List collections (API key)
+// @Description List collections using an API key. Useful for CI/CD and third-party integrations.
+// @Tags        public-api
+// @Produce     json
+// @Security    ApiKeyAuth
+// @Success     200  {array}   models.Collection
+// @Failure     401  {object}  object{error=string}
+// @Router      /api/v1/collections [get]
 func PublicGetCollections(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 
@@ -163,7 +172,16 @@ func PublicGetCollections(c *gin.Context) {
 	c.JSON(http.StatusOK, collections)
 }
 
-// PublicGetCollection returns a specific collection with full details
+// PublicGetCollection returns a specific collection with full details.
+//
+// @Summary     Get collection (API key)
+// @Tags        public-api
+// @Produce     json
+// @Security    ApiKeyAuth
+// @Param       id   path      int  true  "Collection ID"
+// @Success     200  {object}  object{id=int,name=string,collection=models.PostmanCollection}
+// @Failure     404  {object}  object{error=string}
+// @Router      /api/v1/collections/{id} [get]
 func PublicGetCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")
@@ -218,7 +236,19 @@ func PublicGetCollectionRaw(c *gin.Context) {
 	c.String(http.StatusOK, collection.RawJSON)
 }
 
-// PublicUpdateCollection updates a collection's raw JSON
+// PublicUpdateCollection updates a collection's raw JSON.
+//
+// @Summary     Update collection (API key)
+// @Tags        public-api
+// @Accept      json
+// @Produce     json
+// @Security    ApiKeyAuth
+// @Param       id    path      int                          true  "Collection ID"
+// @Param       body  body      object{raw_json=string}      true  "New collection JSON"
+// @Success     200   {object}  models.Collection
+// @Failure     400   {object}  object{error=string}
+// @Failure     404   {object}  object{error=string}
+// @Router      /api/v1/collections/{id} [put]
 func PublicUpdateCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")
@@ -266,7 +296,18 @@ func PublicUpdateCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, collection)
 }
 
-// PublicCreateCollection creates a new collection
+// PublicCreateCollection creates a new collection.
+//
+// @Summary     Create collection (API key)
+// @Description Accepts either {"raw_json":"..."}, {"name":"...","description":"..."}, or a raw Postman collection JSON body.
+// @Tags        public-api
+// @Accept      json
+// @Produce     json
+// @Security    ApiKeyAuth
+// @Param       body  body      object{}  true  "Collection payload"
+// @Success     201   {object}  models.Collection
+// @Failure     400   {object}  object{error=string}
+// @Router      /api/v1/collections [post]
 // Accepts either:
 // 1. {"raw_json": "..."} - raw JSON string of collection
 // 2. {"name": "...", "description": "..."} - create empty collection
@@ -350,7 +391,16 @@ func PublicCreateCollection(c *gin.Context) {
 	c.JSON(http.StatusCreated, dbCollection)
 }
 
-// PublicDeleteCollection deletes a collection
+// PublicDeleteCollection deletes a collection.
+//
+// @Summary     Delete collection (API key)
+// @Tags        public-api
+// @Produce     json
+// @Security    ApiKeyAuth
+// @Param       id   path      int  true  "Collection ID"
+// @Success     200  {object}  object{message=string}
+// @Failure     404  {object}  object{error=string}
+// @Router      /api/v1/collections/{id} [delete]
 func PublicDeleteCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")
