@@ -259,11 +259,22 @@ PROV_EOF
 
 mkdir -p /var/lib/grafana/dashboards
 
-# Download official k6 Load Testing Results dashboard (2587) — raw JSON for file provisioning
-curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" \
-    -o /var/lib/grafana/dashboards/k6.json 2>/dev/null && \
-    log_info "k6 dashboard downloaded" || \
+# Download and import k6 dashboard via Grafana API (handles DS_K6 -> InfluxDB mapping)
+log_info "Importing k6 dashboard into Grafana..."
+sleep 5  # wait for Grafana to be ready
+K6_DASH=$(curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" 2>/dev/null)
+if [ -n "$K6_DASH" ]; then
+    curl -s -X POST http://localhost:3001/grafana/api/dashboards/import \
+        -H "Content-Type: application/json" \
+        -u admin:admin \
+        -d "{
+            \"dashboard\": $K6_DASH,
+            \"overwrite\": true,
+            \"inputs\": [{\"name\": \"DS_K6\", \"type\": \"datasource\", \"pluginId\": \"influxdb\", \"value\": \"InfluxDB\"}]
+        }" && log_info "k6 dashboard imported successfully" || log_warn "k6 dashboard import failed"
+else
     log_warn "Could not download k6 dashboard — import manually from grafana.com/dashboards/2587"
+fi
 
 chown -R grafana:grafana /var/lib/grafana/dashboards 2>/dev/null || true
 
