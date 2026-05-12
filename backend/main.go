@@ -118,6 +118,11 @@ func main() {
 		api.POST("/requests/execute", handlers.ExecuteRequest)
 		api.POST("/requests/execute-multipart", handlers.ExecuteMultipartRequest)
 
+		// Performance testing
+		api.POST("/performance/test", handlers.RunPerformanceTest)
+		api.GET("/performance/test/:id", handlers.GetPerformanceTest)
+		api.GET("/performance/tests", handlers.ListPerformanceTests)
+
 		// Saved tabs (user-scoped)
 		api.GET("/tabs", handlers.GetSavedTabs)
 		api.POST("/tabs", handlers.SaveTabs)

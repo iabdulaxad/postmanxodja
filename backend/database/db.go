@@ -37,6 +37,7 @@ func InitDB() error {
 		&models.Collection{},
 		&models.Environment{},
 		&models.SavedTab{},
+		&models.PerformanceTest{},
 	); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}

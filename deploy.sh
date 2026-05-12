@@ -193,6 +193,83 @@ systemctl restart grafana-server
 log_info "Grafana running on port 3001"
 
 #################################################
+# Install InfluxDB v1 (k6 metrics storage)
+#################################################
+if ! command -v influxd &> /dev/null; then
+    log_info "Installing InfluxDB v1..."
+    wget -q https://dl.influxdata.com/influxdb/releases/influxdb_1.11.8_amd64.deb
+    dpkg -i influxdb_1.11.8_amd64.deb
+    rm -f influxdb_1.11.8_amd64.deb
+else
+    log_info "InfluxDB already installed"
+fi
+
+systemctl enable influxdb
+systemctl start influxdb
+sleep 3
+
+# Create k6 database in InfluxDB
+influx -execute "CREATE DATABASE k6" 2>/dev/null || true
+log_info "InfluxDB ready with k6 database"
+
+#################################################
+# Install k6 with browser support
+#################################################
+if ! command -v k6 &> /dev/null; then
+    log_info "Installing k6..."
+    gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+        --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69 2>/dev/null || true
+    echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" > /etc/apt/sources.list.d/k6.list
+    apt-get update
+    apt-get install -y k6
+    # Install Chromium for k6 browser module
+    apt-get install -y chromium-browser 2>/dev/null || apt-get install -y chromium 2>/dev/null || true
+else
+    log_info "k6 already installed"
+fi
+
+#################################################
+# Provision Grafana datasource + k6 dashboard
+#################################################
+log_info "Provisioning Grafana datasources and dashboards..."
+
+mkdir -p /etc/grafana/provisioning/datasources
+cat > /etc/grafana/provisioning/datasources/influxdb.yml << 'PROV_EOF'
+apiVersion: 1
+datasources:
+  - name: InfluxDB-k6
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    database: k6
+    isDefault: true
+    editable: true
+PROV_EOF
+
+mkdir -p /etc/grafana/provisioning/dashboards
+cat > /etc/grafana/provisioning/dashboards/k6.yml << 'PROV_EOF'
+apiVersion: 1
+providers:
+  - name: k6
+    folder: Performance
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+PROV_EOF
+
+mkdir -p /var/lib/grafana/dashboards
+
+# Download official k6 browser dashboard
+curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" \
+    -o /var/lib/grafana/dashboards/k6-browser.json 2>/dev/null || \
+    log_warn "Could not download k6 dashboard — import manually from grafana.com/dashboards/2587"
+
+chown -R grafana:grafana /var/lib/grafana/dashboards 2>/dev/null || true
+
+systemctl restart grafana-server
+log_info "Grafana provisioned with InfluxDB datasource and k6 dashboard"
+
+#################################################
 # Create application directory
 #################################################
 log_info "Setting up application directory..."
@@ -275,6 +352,15 @@ log_info "  POSTGRES_HOST: ${_POSTGRES_HOST}"
 log_info "  POSTGRES_PASSWORD: $([ -n "$_POSTGRES_PASSWORD" ] && echo "***SET***" || echo "NOT_SET")"
 log_info "  GOOGLE_CLIENT_ID: $([ -n "$GOOGLE_CLIENT_ID" ] && echo "***SET***" || echo "NOT_SET")"
 log_info "  SMTP_HOST: $([ -n "$SMTP_HOST" ] && echo "${SMTP_HOST}" || echo "NOT_SET")"
+
+#################################################
+# Copy k6 scripts
+#################################################
+log_info "Setting up k6 scripts..."
+mkdir -p $APP_DIR/k6
+if [ -d "$APP_DIR/k6" ]; then
+    chmod +x $APP_DIR/k6/*.js 2>/dev/null || true
+fi
 
 #################################################
 # Build Frontend

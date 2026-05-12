@@ -12,6 +12,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import CollectionSelector from '../components/CollectionSelector';
 import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
+import PerformancePanel from '../components/PerformancePanel';
 import { useTeam } from '../contexts/TeamContext';
 import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment } from '../services/api';
 import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
@@ -42,6 +43,7 @@ export default function DashboardPage() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [showGrafana, setShowGrafana] = useState(false);
+    const [showPerformance, setShowPerformance] = useState(false);
     const [responseCollapsed, setResponseCollapsed] = useState(false);
     const [curlImportOpen, setCurlImportOpen] = useState(false);
     const [ucodeImportOpen, setUcodeImportOpen] = useState(false);
@@ -852,13 +854,22 @@ export default function DashboardPage() {
                             />
                         </div>
                         <button
-                            onClick={() => { setShowGrafana(v => !v); setMobileSidebarOpen(false); }}
+                            onClick={() => { setShowGrafana(v => !v); setShowPerformance(false); setMobileSidebarOpen(false); }}
                             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
                         >
                             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             Grafana
+                        </button>
+                        <button
+                            onClick={() => { setShowPerformance(v => !v); setShowGrafana(false); setMobileSidebarOpen(false); }}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showPerformance ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                        >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Performance
                         </button>
                         <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                     </div>
@@ -884,13 +895,22 @@ export default function DashboardPage() {
                         />
                     </div>
                     <button
-                        onClick={() => setShowGrafana(v => !v)}
+                        onClick={() => { setShowGrafana(v => !v); setShowPerformance(false); }}
                         className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
                     >
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         Grafana
+                    </button>
+                    <button
+                        onClick={() => { setShowPerformance(v => !v); setShowGrafana(false); }}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showPerformance ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                    >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Performance
                     </button>
                     <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                 </HorizontalSplitter>
@@ -930,8 +950,31 @@ export default function DashboardPage() {
                     </div>
                 )}
 
+                {/* Performance View */}
+                {showPerformance && (
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card flex-shrink-0">
+                            <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Performance Testing
+                            </span>
+                            <button
+                                onClick={() => setShowPerformance(false)}
+                                className="p-1 text-muted-foreground hover:bg-accent rounded"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <PerformancePanel />
+                    </div>
+                )}
+
                 {/* Tabs + Request Area */}
-                {!showGrafana && <>
+                {!showGrafana && !showPerformance && <>
                 <TabsBar
                     tabs={tabs}
                     activeTabId={activeTabId}
@@ -1010,7 +1053,8 @@ export default function DashboardPage() {
                         }
                     />
                 )}
-                </>}
+                    </>}
+
             </div>
         </div>
     );
