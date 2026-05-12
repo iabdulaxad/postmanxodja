@@ -19,12 +19,26 @@ export default function PerformancePanel() {
   const [history, setHistory] = useState<PerformanceTest[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'output'>('dashboard');
+  const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadHistory();
+    fetchDashboardUrl();
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
+
+  const fetchDashboardUrl = async () => {
+    try {
+      const res = await fetch(`${grafanaUrl}/api/search?query=k6&type=dash-db`);
+      if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          setDashboardUrl(`${grafanaUrl}${list[0].url}?orgId=1&refresh=5s&from=now-15m&to=now`);
+        }
+      }
+    } catch {}
+  };
 
   const loadHistory = async () => {
     try {
@@ -92,9 +106,7 @@ export default function PerformancePanel() {
     );
   };
 
-  const grafanaDashboardUrl = activeTest
-    ? `${grafanaUrl}/d/k6-load-testing-results/k6-load-testing-results?orgId=1&refresh=5s&from=now-5m&to=now`
-    : `${grafanaUrl}/dashboards?orgId=1`;
+  const grafanaDashboardUrl = dashboardUrl || `${grafanaUrl}/dashboards?orgId=1`;
 
   return (
     <div className="flex flex-col h-full min-h-0">

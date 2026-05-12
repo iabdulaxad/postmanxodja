@@ -237,7 +237,7 @@ mkdir -p /etc/grafana/provisioning/datasources
 cat > /etc/grafana/provisioning/datasources/influxdb.yml << 'PROV_EOF'
 apiVersion: 1
 datasources:
-  - name: InfluxDB-k6
+  - name: InfluxDB
     type: influxdb
     access: proxy
     url: http://localhost:8086
