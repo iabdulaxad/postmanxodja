@@ -14,11 +14,6 @@ export const options = {
       },
     },
   },
-  thresholds: {
-    'browser_web_vital_lcp': ['p(75) < 2500'],
-    'browser_web_vital_cls': ['p(75) < 0.1'],
-    'browser_web_vital_fid': ['p(75) < 100'],
-  },
 };
 
 export default async function () {

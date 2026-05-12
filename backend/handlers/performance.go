@@ -121,8 +121,13 @@ func runK6Test(testID uint, targetURL string) {
 		"status":   "completed",
 	}
 	if err != nil {
-		update["status"] = "failed"
-		update["error"] = err.Error()
+		// exit code 104 = thresholds not met — test still ran successfully
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 104 {
+			update["status"] = "completed"
+		} else {
+			update["status"] = "failed"
+			update["error"] = err.Error()
+		}
 	}
 	database.GetDB().Model(&models.PerformanceTest{}).Where("id = ?", testID).Updates(update)
 }
