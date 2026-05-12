@@ -113,12 +113,14 @@ func runK6Test(testID uint, targetURL string) {
 	cmd.Env = os.Environ()
 
 	output, err := cmd.CombinedOutput()
-	log.Printf("k6 test %d output: %s", testID, string(output))
+	outputStr := string(output)
+	log.Printf("k6 test %d output: %s", testID, outputStr)
 
 	now := time.Now()
 	update := map[string]interface{}{
 		"ended_at": now,
 		"status":   "completed",
+		"output":   outputStr,
 	}
 	if err != nil {
 		// 104 = thresholds not met — test ran fine, data is in Grafana
@@ -127,6 +129,7 @@ func runK6Test(testID uint, targetURL string) {
 		} else {
 			update["status"] = "failed"
 			update["error"] = err.Error()
+			update["output"] = outputStr
 		}
 	}
 	database.GetDB().Model(&models.PerformanceTest{}).Where("id = ?", testID).Updates(update)

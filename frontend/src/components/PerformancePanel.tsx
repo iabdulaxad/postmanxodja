@@ -7,6 +7,7 @@ interface PerformanceTest {
   started_at: string;
   ended_at?: string;
   error?: string;
+  output?: string;
 }
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
@@ -17,7 +18,7 @@ export default function PerformancePanel() {
   const [activeTest, setActiveTest] = useState<PerformanceTest | null>(null);
   const [history, setHistory] = useState<PerformanceTest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'output'>('dashboard');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -160,6 +161,12 @@ export default function PerformancePanel() {
         >
           Test History
         </button>
+        <button
+          onClick={() => setActiveTab('output')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'output' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+        >
+          k6 Output
+        </button>
       </div>
 
       {/* Content */}
@@ -171,6 +178,20 @@ export default function PerformancePanel() {
             title="k6 Performance Dashboard"
             allow="fullscreen"
           />
+        )}
+
+        {activeTab === 'output' && (
+          <div className="h-full overflow-y-auto p-4 bg-background">
+            {!activeTest ? (
+              <p className="text-sm text-muted-foreground">Run a test to see k6 output here.</p>
+            ) : activeTest.status === 'running' ? (
+              <p className="text-sm text-muted-foreground animate-pulse">Test is running...</p>
+            ) : (
+              <pre className="text-xs text-foreground font-mono whitespace-pre-wrap break-all">
+                {activeTest.output || activeTest.error || 'No output captured.'}
+              </pre>
+            )}
+          </div>
         )}
 
         {activeTab === 'history' && (
