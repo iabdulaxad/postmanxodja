@@ -27,7 +27,7 @@ export default function PerformancePanel() {
 
   const loadHistory = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${apiBase}/performance/tests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -39,7 +39,7 @@ export default function PerformancePanel() {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const res = await fetch(`${apiBase}/performance/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -61,7 +61,7 @@ export default function PerformancePanel() {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         const res = await fetch(`${apiBase}/performance/test/${testId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
