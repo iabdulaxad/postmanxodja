@@ -197,9 +197,9 @@ log_info "Grafana running on port 3001"
 #################################################
 if ! command -v influxd &> /dev/null; then
     log_info "Installing InfluxDB v1..."
-    wget -q https://dl.influxdata.com/influxdb/releases/influxdb_1.11.8_amd64.deb
-    dpkg -i influxdb_1.11.8_amd64.deb
-    rm -f influxdb_1.11.8_amd64.deb
+    wget -q https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_amd64.deb
+    dpkg -i influxdb_1.8.10_amd64.deb
+    rm -f influxdb_1.8.10_amd64.deb
 else
     log_info "InfluxDB already installed"
 fi
