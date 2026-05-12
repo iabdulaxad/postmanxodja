@@ -246,22 +246,18 @@ datasources:
     editable: true
 PROV_EOF
 
-mkdir -p /etc/grafana/provisioning/dashboards
-cat > /etc/grafana/provisioning/dashboards/k6.yml << 'PROV_EOF'
-apiVersion: 1
-providers:
-  - name: k6
-    folder: Performance
-    type: file
-    options:
-      path: /var/lib/grafana/dashboards
-PROV_EOF
+# Remove file-based dashboard provisioning (using API import instead)
+rm -f /etc/grafana/provisioning/dashboards/k6.yml
 
-mkdir -p /var/lib/grafana/dashboards
+# Clean up any broken provisioned dashboard files
+rm -f /var/lib/grafana/dashboards/k6.json
+rm -f /var/lib/grafana/dashboards/k6-browser.json
 
-# Download and import k6 dashboard via Grafana API (handles DS_K6 -> InfluxDB mapping)
-log_info "Importing k6 dashboard into Grafana..."
+systemctl restart grafana-server
 sleep 5  # wait for Grafana to be ready
+
+# Import k6 dashboard via API (handles DS_K6 -> InfluxDB datasource mapping)
+log_info "Importing k6 dashboard into Grafana..."
 K6_DASH=$(curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" 2>/dev/null)
 if [ -n "$K6_DASH" ]; then
     curl -s -X POST http://localhost:3001/grafana/api/dashboards/import \
@@ -271,14 +267,11 @@ if [ -n "$K6_DASH" ]; then
             \"dashboard\": $K6_DASH,
             \"overwrite\": true,
             \"inputs\": [{\"name\": \"DS_K6\", \"type\": \"datasource\", \"pluginId\": \"influxdb\", \"value\": \"InfluxDB\"}]
-        }" && log_info "k6 dashboard imported successfully" || log_warn "k6 dashboard import failed"
+        }" && log_info "k6 dashboard imported" || log_warn "k6 dashboard import failed"
 else
-    log_warn "Could not download k6 dashboard — import manually from grafana.com/dashboards/2587"
+    log_warn "Could not download k6 dashboard"
 fi
 
-chown -R grafana:grafana /var/lib/grafana/dashboards 2>/dev/null || true
-
-systemctl restart grafana-server
 log_info "Grafana provisioned with InfluxDB datasource and k6 dashboard"
 
 #################################################

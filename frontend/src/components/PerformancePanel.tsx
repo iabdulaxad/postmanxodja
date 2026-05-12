@@ -19,29 +19,13 @@ export default function PerformancePanel() {
   const [history, setHistory] = useState<PerformanceTest[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'output'>('dashboard');
-  const [dashboardUrl, setDashboardUrl] = useState<string | null>(null);
+  const dashboardUrl = `${grafanaUrl}/d/158f9d6a-d036-4ea3-8973-56fad478979d/k6-load-testing-results?orgId=1&refresh=5s&from=now-15m&to=now&kiosk`;
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadHistory();
-    fetchDashboardUrl();
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
-
-  const fetchDashboardUrl = async () => {
-    try {
-      const res = await fetch(`${grafanaUrl}/api/search?query=k6&type=dash-db`);
-      if (res.ok) {
-        const list = await res.json();
-        if (Array.isArray(list) && list.length > 0) {
-          setDashboardUrl(`${grafanaUrl}${list[0].url}?orgId=1&refresh=5s&from=now-15m&to=now&kiosk`);
-          return;
-        }
-      }
-    } catch {}
-    // fallback to known UID
-    setDashboardUrl(`${grafanaUrl}/d/158f9d6a-d036-4ea3-8973-56fad478979d/k6-load-testing-results?orgId=1&refresh=5s&from=now-15m&to=now&kiosk`);
-  };
 
   const loadHistory = async () => {
     try {
