@@ -51,6 +51,9 @@ func NewServer() *mcpserver.StreamableHTTPServer {
 	s.AddTool(setEnvVariableTool(), setEnvVariableHandler)
 	s.AddTool(deleteEnvVariableTool(), deleteEnvVariableHandler)
 
+	// Teams
+	s.AddTool(listTeamsTool(), listTeamsHandler)
+
 	// Request execution
 	s.AddTool(executeRequestTool(), executeRequestHandler)
 
