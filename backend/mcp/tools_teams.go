@@ -14,10 +14,14 @@ func listTeamsTool() mcpsdk.Tool {
 	)
 }
 
-func listTeamsHandler(_ context.Context, _ mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	var teams []models.Team
-	if err := database.GetDB().Find(&teams).Error; err != nil {
-		return errResult("database error: " + err.Error())
+func listTeamsHandler(ctx context.Context, _ mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
+	if err != nil {
+		return errResult(err.Error())
 	}
-	return jsonResult(teams), nil
+	var team models.Team
+	if err := database.GetDB().First(&team, teamID).Error; err != nil {
+		return errResult("team not found")
+	}
+	return jsonResult([]models.Team{team}), nil
 }

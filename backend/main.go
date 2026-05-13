@@ -176,13 +176,11 @@ func main() {
 
 	// MCP server — authenticated via API key, stateless streamable HTTP transport
 	// Mount at /mcp; clients connect with X-API-Key header
-	mcpHandler := mcpmount.GinHandler()
 	mcpGroup := r.Group("/mcp")
 	mcpGroup.Use(middleware.APIKeyMiddleware())
-	mcpGroup.Any("", gin.WrapH(mcpmount.ProxyHandler(mcpHandler)))
-	mcpGroup.Any("/*path", func(c *gin.Context) {
-		mcpmount.ProxyHandler(mcpHandler).ServeHTTP(c.Writer, c.Request)
-	})
+	mcpProxy := mcpmount.GinProxyHandler()
+	mcpGroup.Any("", mcpProxy)
+	mcpGroup.Any("/*path", mcpProxy)
 
 	// Public API routes (authenticated via API key for third-party access)
 	publicApi := r.Group("/api/v1")

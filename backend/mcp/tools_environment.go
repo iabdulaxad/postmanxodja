@@ -68,8 +68,8 @@ func deleteEnvVariableTool() mcpsdk.Tool {
 
 // ---- handlers ----
 
-func createEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func createEnvironmentHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -96,8 +96,8 @@ func createEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*m
 	return jsonResult(env), nil
 }
 
-func getEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func getEnvironmentHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -113,8 +113,8 @@ func getEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcps
 	return jsonResult(env), nil
 }
 
-func updateEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func updateEnvironmentHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -145,8 +145,8 @@ func updateEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*m
 	return jsonResult(env), nil
 }
 
-func deleteEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func deleteEnvironmentHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -163,8 +163,8 @@ func deleteEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*m
 	return textResult(fmt.Sprintf("environment %d deleted", envID)), nil
 }
 
-func setEnvVariableHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func setEnvVariableHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -194,8 +194,8 @@ func setEnvVariableHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcps
 	return jsonResult(env), nil
 }
 
-func deleteEnvVariableHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func deleteEnvVariableHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}

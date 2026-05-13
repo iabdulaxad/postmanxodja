@@ -12,9 +12,25 @@ import (
 	"postmanxodja/services"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 )
+
+type ctxKey struct{}
+
+func withTeamID(ctx context.Context, teamID uint) context.Context {
+	return context.WithValue(ctx, ctxKey{}, teamID)
+}
+
+// ctxTeamID returns the team_id injected by GinProxyHandler from the API key.
+func ctxTeamID(ctx context.Context) (uint, error) {
+	v, ok := ctx.Value(ctxKey{}).(uint)
+	if !ok || v == 0 {
+		return 0, fmt.Errorf("no team identity in request context")
+	}
+	return v, nil
+}
 
 // NewServer creates and returns an MCP server with all registered tools.
 func NewServer() *mcpserver.StreamableHTTPServer {
@@ -168,8 +184,8 @@ func errResult(msg string) (*mcpsdk.CallToolResult, error) {
 
 // ---------- handlers ----------
 
-func listCollectionsHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func listCollectionsHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -182,8 +198,8 @@ func listCollectionsHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcp
 	return jsonResult(cols), nil
 }
 
-func getCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func getCollectionHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -212,8 +228,8 @@ func getCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsd
 	}), nil
 }
 
-func createCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func createCollectionHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -249,8 +265,8 @@ func createCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mc
 	return jsonResult(col), nil
 }
 
-func updateCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func updateCollectionHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -296,8 +312,8 @@ func updateCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mc
 	return jsonResult(col), nil
 }
 
-func deleteCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func deleteCollectionHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -314,8 +330,8 @@ func deleteCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mc
 	return textResult("collection " + strconv.FormatUint(uint64(colID), 10) + " deleted"), nil
 }
 
-func listEnvironmentsHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func listEnvironmentsHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -369,25 +385,23 @@ func executeRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcps
 	return jsonResult(resp), nil
 }
 
-// GinHandler wraps the MCP StreamableHTTPServer as a Gin-compatible http.Handler.
-// Mount it with: r.Any("/mcp", gin.WrapH(mcp.NewServer()))
-func GinHandler() http.Handler {
-	return NewServer()
-}
+// GinProxyHandler returns a Gin handler that injects the API key's team_id into
+// the request context before forwarding to the MCP server. Every MCP handler
+// reads team scope exclusively from this context value, so a key can never
+// access data outside its own team regardless of what team_id the caller passes.
+func GinProxyHandler() gin.HandlerFunc {
+	mcpHandler := NewServer()
+	return func(c *gin.Context) {
+		teamID := c.GetUint("team_id")
 
-// ProxyHandler returns an http.HandlerFunc that validates the API key from the
-// request context (set by APIKeyMiddleware) and forwards to the MCP server.
-// We need this thin wrapper because Gin's middleware already did auth — the MCP
-// server itself is stateless and does not repeat auth.
-func ProxyHandler(mcpHandler http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Drain and re-attach body so the MCP server can read it.
-		body, err := io.ReadAll(r.Body)
+		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			http.Error(w, "failed to read body", http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
-		r.Body = io.NopCloser(bytes.NewReader(body))
-		mcpHandler.ServeHTTP(w, r)
+		c.Request.Body = io.NopCloser(bytes.NewReader(body))
+
+		ctx := withTeamID(c.Request.Context(), teamID)
+		mcpHandler.ServeHTTP(c.Writer, c.Request.WithContext(ctx))
 	}
 }

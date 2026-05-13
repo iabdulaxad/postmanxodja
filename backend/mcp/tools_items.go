@@ -214,8 +214,8 @@ func headersToKV(s string) ([]models.PostmanKeyValue, error) {
 
 // ---- handlers ----
 
-func listFoldersHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func listFoldersHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -246,8 +246,8 @@ func listFoldersHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.
 	return jsonResult(out), nil
 }
 
-func createFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func createFolderHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -284,8 +284,8 @@ func createFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk
 	return textResult(fmt.Sprintf("folder '%s' created", name)), nil
 }
 
-func renameFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func renameFolderHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -314,8 +314,8 @@ func renameFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk
 	return textResult(fmt.Sprintf("folder renamed to '%s'", newName)), nil
 }
 
-func deleteFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func deleteFolderHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -343,8 +343,8 @@ func deleteFolderHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk
 	return textResult(fmt.Sprintf("folder '%s' deleted", folderName)), nil
 }
 
-func addRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func addRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -411,8 +411,8 @@ func addRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.C
 	return textResult(fmt.Sprintf("request '%s' added", name)), nil
 }
 
-func updateRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func updateRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -470,8 +470,8 @@ func updateRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsd
 	return textResult(fmt.Sprintf("request '%s' updated", requestName)), nil
 }
 
-func deleteRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func deleteRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -509,8 +509,8 @@ func deleteRequestHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsd
 	return textResult(fmt.Sprintf("request '%s' deleted", requestName)), nil
 }
 
-func setCollectionEnvironmentHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func setCollectionEnvironmentHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
@@ -545,8 +545,8 @@ func setCollectionEnvironmentHandler(_ context.Context, req mcpsdk.CallToolReque
 	return textResult(fmt.Sprintf("environment '%s' linked to collection '%s'", env.Name, col.Name)), nil
 }
 
-func exportCollectionHandler(_ context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-	teamID, err := numParam(req, "team_id")
+func exportCollectionHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+	teamID, err := ctxTeamID(ctx)
 	if err != nil {
 		return errResult(err.Error())
 	}
