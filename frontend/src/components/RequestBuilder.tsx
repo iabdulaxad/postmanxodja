@@ -1,4 +1,34 @@
 import { useState, useEffect, useRef } from 'react';
+
+function stripBodyComments(body: string): string {
+    let result = '';
+    let i = 0;
+    while (i < body.length) {
+        if (body[i] === '"') {
+            result += body[i++];
+            while (i < body.length) {
+                if (body[i] === '\\') {
+                    result += body[i] + (body[i + 1] ?? '');
+                    i += 2;
+                } else if (body[i] === '"') {
+                    result += body[i++];
+                    break;
+                } else {
+                    result += body[i++];
+                }
+            }
+        } else if (body[i] === '/' && body[i + 1] === '/') {
+            while (i < body.length && body[i] !== '\n') i++;
+        } else if (body[i] === '/' && body[i + 1] === '*') {
+            i += 2;
+            while (i < body.length && !(body[i] === '*' && body[i + 1] === '/')) i++;
+            i += 2;
+        } else {
+            result += body[i++];
+        }
+    }
+    return result;
+}
 import { executeRequest } from '../services/api';
 import VariableInput from './VariableInput';
 import JsonTreeEditor from './JsonTreeEditor';
@@ -303,7 +333,7 @@ export default function RequestBuilder({
                 method,
                 url: finalUrl,
                 headers: headersWithAuth,
-                body: bodyType === 'raw' ? body : '',
+                body: bodyType === 'raw' ? stripBodyComments(body) : '',
                 body_type: bodyType,
                 form_data: bodyType === 'form-data' ? formData.filter(f => f.key) : undefined,
                 query_params: {},
@@ -821,7 +851,7 @@ export default function RequestBuilder({
                                                 onClick={() => {
                                                     try {
                                                         const placeholders: string[] = [];
-                                                        const safeBody = body.replace(/\{\{([^}]+)\}\}/g, (m) => {
+                                                        const safeBody = stripBodyComments(body).replace(/\{\{([^}]+)\}\}/g, (m) => {
                                                             const idx = placeholders.length;
                                                             placeholders.push(m);
                                                             return `"__VAR_${idx}__"`;

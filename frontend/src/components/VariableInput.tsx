@@ -113,7 +113,8 @@ export default function VariableInput({
         (code: string): string => {
             if (!code) return "";
 
-            const regex = /\{\{([^}]+)\}\}/g;
+            // line comments | block comments | variables
+            const regex = /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|(\{\{([^}]+)\}\})/g;
             let result = "";
             let lastIndex = 0;
             let match;
@@ -121,10 +122,14 @@ export default function VariableInput({
             while ((match = regex.exec(code)) !== null) {
                 result += escapeHtml(code.slice(lastIndex, match.index));
 
-                const varName = match[1];
-                const hasValue = envVariables[varName] !== undefined;
-                const cls = hasValue ? "vi-var vi-var-found" : "vi-var vi-var-missing";
-                result += `<span class="${cls}" data-var-name="${escapeHtml(varName)}">${escapeHtml(match[0])}</span>`;
+                if (match[1] || match[2]) {
+                    result += `<span class="vi-comment">${escapeHtml(match[0])}</span>`;
+                } else {
+                    const varName = match[4];
+                    const hasValue = envVariables[varName] !== undefined;
+                    const cls = hasValue ? "vi-var vi-var-found" : "vi-var vi-var-missing";
+                    result += `<span class="${cls}" data-var-name="${escapeHtml(varName)}">${escapeHtml(match[3])}</span>`;
+                }
 
                 lastIndex = match.index + match[0].length;
             }
@@ -139,9 +144,9 @@ export default function VariableInput({
         (code: string): string => {
             if (!code) return "";
 
-            // Combined regex: variables | JSON strings | numbers | booleans | null
+            // line comments | block comments | variables | JSON strings | numbers | booleans | null
             const tokenRegex =
-                /(\{\{[^}]+\}\})|("(?:[^"\\]|\\.)*")|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(\btrue\b|\bfalse\b)|(\bnull\b)/g;
+                /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|(\{\{[^}]+\}\})|("(?:[^"\\]|\\.)*")|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(\btrue\b|\bfalse\b)|(\bnull\b)/g;
 
             let result = "";
             let lastIndex = 0;
@@ -155,7 +160,10 @@ export default function VariableInput({
 
                 const fullMatch = match[0];
 
-                if (match[1]) {
+                if (match[1] || match[2]) {
+                    // Line comment or block comment
+                    result += `<span class="vi-comment">${escapeHtml(fullMatch)}</span>`;
+                } else if (match[3]) {
                     // Variable {{name}}
                     const varName = fullMatch.slice(2, -2);
                     const hasValue = envVariables[varName] !== undefined;
@@ -163,17 +171,17 @@ export default function VariableInput({
                         ? "vi-var vi-var-found"
                         : "vi-var vi-var-missing";
                     result += `<span class="${cls}" data-var-name="${escapeHtml(varName)}">${escapeHtml(fullMatch)}</span>`;
-                } else if (match[2]) {
+                } else if (match[4]) {
                     // String — check if it's a key (followed by colon)
                     const afterMatch = code.slice(match.index + fullMatch.length);
                     const isKey = /^\s*:/.test(afterMatch);
                     const cls = isKey ? "vi-json-key" : "vi-json-string";
                     result += `<span class="${cls}">${escapeHtml(fullMatch)}</span>`;
-                } else if (match[3]) {
-                    result += `<span class="vi-json-number">${escapeHtml(fullMatch)}</span>`;
-                } else if (match[4]) {
-                    result += `<span class="vi-json-boolean">${escapeHtml(fullMatch)}</span>`;
                 } else if (match[5]) {
+                    result += `<span class="vi-json-number">${escapeHtml(fullMatch)}</span>`;
+                } else if (match[6]) {
+                    result += `<span class="vi-json-boolean">${escapeHtml(fullMatch)}</span>`;
+                } else if (match[7]) {
                     result += `<span class="vi-json-null">${escapeHtml(fullMatch)}</span>`;
                 }
 
