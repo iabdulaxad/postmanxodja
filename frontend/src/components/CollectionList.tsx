@@ -518,7 +518,7 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
               setDragState(null);
               setDropTargetPath(null);
             }}
-            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
+            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, description: item.description || '', collectionId, itemPath })}
           >
             <div
               className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"

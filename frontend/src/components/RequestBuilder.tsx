@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { marked } from 'marked';
 
 function stripBodyComments(body: string): string {
     let result = '';
@@ -84,6 +85,7 @@ export default function RequestBuilder({
     const [loading, setLoading] = useState(false);
     const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body' | 'auth' | 'docs'>('params');
     const [docs, setDocs] = useState(initialDocs);
+    const [docsEditMode, setDocsEditMode] = useState(false);
     const [curlCopied, setCurlCopied] = useState(false);
     const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('raw');
     const [auth, setAuth] = useState<Authorization | undefined>();
@@ -1052,15 +1054,45 @@ export default function RequestBuilder({
                     {/* Docs Tab */}
                     {activeSection === 'docs' && (
                         <div>
-                            <textarea
-                                value={docs}
-                                onChange={(e) => {
-                                    setDocs(e.target.value);
-                                    notifyUpdate({ docs: e.target.value });
-                                }}
-                                placeholder="Add notes or documentation for this request..."
-                                className="w-full min-h-[160px] px-3 py-2 text-sm bg-transparent text-foreground border border-border rounded-md outline-none resize-y placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary/50"
-                            />
+                            <div className="flex justify-end mb-2">
+                                <div className="flex bg-muted rounded-md p-0.5">
+                                    <button
+                                        onClick={() => setDocsEditMode(false)}
+                                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${!docsEditMode ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Preview
+                                    </button>
+                                    <button
+                                        onClick={() => setDocsEditMode(true)}
+                                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${docsEditMode ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
+                            {docsEditMode ? (
+                                <textarea
+                                    value={docs}
+                                    onChange={(e) => {
+                                        setDocs(e.target.value);
+                                        notifyUpdate({ docs: e.target.value });
+                                    }}
+                                    placeholder="Add notes or documentation for this request (supports Markdown)..."
+                                    className="w-full min-h-[200px] px-3 py-2 text-sm bg-transparent text-foreground border border-border rounded-md outline-none resize-y placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary/50 font-mono"
+                                />
+                            ) : docs ? (
+                                <div
+                                    className="prose prose-sm max-w-none text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h2]:mt-4 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_p]:text-sm [&_p]:mb-2 [&_ul]:text-sm [&_ul]:mb-2 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:text-sm [&_ol]:mb-2 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:mb-0.5 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_pre]:text-xs [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:text-xs [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_th]:font-semibold [&_th]:text-left [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_hr]:border-border [&_hr]:my-3 [&_strong]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground"
+                                    dangerouslySetInnerHTML={{ __html: marked(docs) as string }}
+                                />
+                            ) : (
+                                <button
+                                    onClick={() => setDocsEditMode(true)}
+                                    className="w-full text-center py-8 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors"
+                                >
+                                    Click Edit to add documentation for this request
+                                </button>
+                            )}
                         </div>
                     )}
 

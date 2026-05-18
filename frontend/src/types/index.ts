@@ -79,6 +79,7 @@ export interface PostmanCollection {
 
 export interface PostmanItem {
     name: string;
+    description?: string;
     request?: PostmanRequest;
     response?: PostmanResponse[];
     item?: PostmanItem[];
