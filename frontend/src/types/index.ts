@@ -332,4 +332,5 @@ export interface RequestTab {
     collectionId?: number;
     itemPath?: string; // Path to the item in the collection (e.g., "folder1/folder2/request")
     savedResponseIndex?: number; // Index of saved response this tab was opened from
+    docs?: string;
 }

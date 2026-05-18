@@ -1034,6 +1034,7 @@ export default function DashboardPage() {
                                 initialBody={activeTab?.body || ''}
                                 initialQueryParams={activeTab?.queryParams || {}}
                                 initialName={activeTab?.name || 'Untitled'}
+                                initialDocs={activeTab?.docs || ''}
                                 environments={environments}
                                 initialEnvId={initialEnvId}
                                 onEnvironmentChange={activeTab?.collectionId ? handleCollectionEnvChange : undefined}

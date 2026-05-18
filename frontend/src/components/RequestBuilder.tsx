@@ -51,6 +51,7 @@ interface Props {
     onEnvironmentChange?: (envId: number | undefined) => void;
     hasCollectionSource?: boolean;
     onSaveToCollection?: () => Promise<void> | void;
+    initialDocs?: string;
 }
 
 export default function RequestBuilder({
@@ -66,6 +67,7 @@ export default function RequestBuilder({
                                            onUpdate,
                                            onEnvironmentChange,
                                            onSaveToCollection,
+                                           initialDocs = '',
                                        }: Props) {
     const [method, setMethod] = useState(initialMethod);
     const [url, setUrl] = useState(initialUrl);
@@ -80,7 +82,8 @@ export default function RequestBuilder({
     );
     const [selectedEnvId, setSelectedEnvId] = useState<number | undefined>(initialEnvId);
     const [loading, setLoading] = useState(false);
-    const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body' | 'auth'>('params');
+    const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body' | 'auth' | 'docs'>('params');
+    const [docs, setDocs] = useState(initialDocs);
     const [curlCopied, setCurlCopied] = useState(false);
     const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('raw');
     const [auth, setAuth] = useState<Authorization | undefined>();
@@ -261,6 +264,7 @@ export default function RequestBuilder({
         body?: string;
         queryParams?: PostmanKeyValue[];
         auth?: Authorization;
+        docs?: string;
     }) => {
         if (isInitialMount.current) return;
         if (!onUpdateRef.current) return;
@@ -276,6 +280,7 @@ export default function RequestBuilder({
             body: updates.body ?? body,
             queryParams: currentParams,
             auth: updates.auth !== undefined ? updates.auth : auth,
+            docs: updates.docs !== undefined ? updates.docs : docs,
         };
 
         // Only auto-generate tab name for fresh "Untitled" tabs when the URL changes.
@@ -677,6 +682,24 @@ export default function RequestBuilder({
                             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                         )}
                     </button>
+                    <button
+                        onClick={() => setActiveSection('docs')}
+                        className={`relative px-3 py-1.5 text-xs font-medium transition-colors ${
+                            activeSection === 'docs'
+                                ? 'text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+            <span className="flex items-center gap-1.5">
+              Docs
+                {docs && (
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                )}
+            </span>
+                        {activeSection === 'docs' && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                        )}
+                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -1023,6 +1046,21 @@ export default function RequestBuilder({
                                     </button>
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* Docs Tab */}
+                    {activeSection === 'docs' && (
+                        <div>
+                            <textarea
+                                value={docs}
+                                onChange={(e) => {
+                                    setDocs(e.target.value);
+                                    notifyUpdate({ docs: e.target.value });
+                                }}
+                                placeholder="Add notes or documentation for this request..."
+                                className="w-full min-h-[160px] px-3 py-2 text-sm bg-transparent text-foreground border border-border rounded-md outline-none resize-y placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary/50"
+                            />
                         </div>
                     )}
 
