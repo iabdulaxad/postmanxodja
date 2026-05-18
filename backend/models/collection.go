@@ -30,10 +30,11 @@ type PostmanInfo struct {
 }
 
 type PostmanItem struct {
-	Name     string            `json:"name"`
-	Request  *PostmanRequest   `json:"request,omitempty"`
-	Response []PostmanResponse `json:"response,omitempty"` // Saved example responses
-	Item     []PostmanItem     `json:"item"`               // For folders
+	Name        string            `json:"name"`
+	Description string            `json:"description,omitempty"`
+	Request     *PostmanRequest   `json:"request,omitempty"`
+	Response    []PostmanResponse `json:"response,omitempty"` // Saved example responses
+	Item        []PostmanItem     `json:"item"`               // For folders
 }
 
 // PostmanResponse represents a saved example response (Postman collection v2.1 format)

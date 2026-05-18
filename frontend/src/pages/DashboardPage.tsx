@@ -92,6 +92,7 @@ export default function DashboardPage() {
                         headers: Object.entries(t.headers || {}).map(([key, value]) => ({ key, value })),
                         body: t.body,
                         queryParams: Object.entries(t.query_params || {}).map(([key, value]) => ({ key, value })),
+                        docs: t.docs || '',
                     }));
                     setTabs(loadedTabs);
                     const activeTab = savedTabs.find(t => t.is_active);
@@ -260,6 +261,7 @@ export default function DashboardPage() {
             headers,
             body: request.body?.raw || '',
             queryParams,
+            docs: request.description || '',
             request,
             // Store collection source info for syncing changes back
             collectionId: request.collectionId,
@@ -410,6 +412,7 @@ export default function DashboardPage() {
                                 return {
                                     ...item,
                                     name: tab.name,
+                                    description: tab.docs || item.description || '',
                                     request: requestData,
                                 };
                             }
@@ -437,6 +440,7 @@ export default function DashboardPage() {
                 // New request - add it to the collection at the specified folder path or root level
                 const newRequest = {
                     name: tab.name,
+                    description: tab.docs || '',
                     request: requestData,
                 };
 

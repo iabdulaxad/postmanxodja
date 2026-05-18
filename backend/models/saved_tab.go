@@ -12,6 +12,7 @@ type SavedTab struct {
 	Headers     string    `gorm:"type:text" json:"headers"`      // JSON string
 	Body        string    `gorm:"type:text" json:"body"`
 	QueryParams string    `gorm:"type:text" json:"query_params"` // JSON string
+	Docs        string    `gorm:"type:text" json:"docs"`
 	IsActive    bool      `json:"is_active"`
 	SortOrder   int       `json:"sort_order"`
 	CreatedAt   time.Time `json:"created_at"`

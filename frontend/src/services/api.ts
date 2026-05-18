@@ -239,6 +239,7 @@ export interface SavedTab {
   headers: Record<string, string>;
   body: string;
   query_params: Record<string, string>;
+  docs: string;
   is_active: boolean;
   sort_order: number;
 }

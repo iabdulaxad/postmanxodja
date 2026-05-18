@@ -78,6 +78,7 @@ func updateRequestTool() mcpsdk.Tool {
 		mcpsdk.WithString("url", mcpsdk.Description("New URL.")),
 		mcpsdk.WithString("headers", mcpsdk.Description(`New headers as JSON object. Replaces all existing headers.`)),
 		mcpsdk.WithString("body", mcpsdk.Description("New request body.")),
+		mcpsdk.WithString("description", mcpsdk.Description("New documentation/description for the request.")),
 	)
 }
 
@@ -379,7 +380,8 @@ func addRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk
 	}
 
 	newItem := models.PostmanItem{
-		Name: name,
+		Name:        name,
+		Description: strParam(req, "description"),
 		Request: &models.PostmanRequest{
 			Method: method,
 			URL:    rawURL,
@@ -437,6 +439,7 @@ func updateRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcp
 	newURL := strParam(req, "url")
 	newHeadersStr := strParam(req, "headers")
 	newBody := strParam(req, "body")
+	newDescription := strParam(req, "description")
 
 	found := modifyRequest(parsed.Item, requestName, folderName, func(item *models.PostmanItem) {
 		if newName != "" {
@@ -457,6 +460,9 @@ func updateRequestHandler(ctx context.Context, req mcpsdk.CallToolRequest) (*mcp
 				item.Request.Body = &models.PostmanRequestBody{Mode: "raw"}
 			}
 			item.Request.Body.Raw = newBody
+		}
+		if newDescription != "" {
+			item.Description = newDescription
 		}
 	})
 

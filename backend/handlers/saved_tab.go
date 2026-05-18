@@ -17,6 +17,7 @@ type TabRequest struct {
 	Headers     map[string]string `json:"headers"`
 	Body        string            `json:"body"`
 	QueryParams map[string]string `json:"query_params"`
+	Docs        string            `json:"docs"`
 	IsActive    bool              `json:"is_active"`
 	SortOrder   int               `json:"sort_order"`
 }
@@ -30,6 +31,7 @@ type TabResponse struct {
 	Headers     map[string]string `json:"headers"`
 	Body        string            `json:"body"`
 	QueryParams map[string]string `json:"query_params"`
+	Docs        string            `json:"docs"`
 	IsActive    bool              `json:"is_active"`
 	SortOrder   int               `json:"sort_order"`
 }
@@ -66,6 +68,7 @@ func GetSavedTabs(c *gin.Context) {
 			Headers:     headers,
 			Body:        tab.Body,
 			QueryParams: queryParams,
+			Docs:        tab.Docs,
 			IsActive:    tab.IsActive,
 			SortOrder:   tab.SortOrder,
 		}
@@ -112,6 +115,7 @@ func SaveTabs(c *gin.Context) {
 			Headers:     string(headersJSON),
 			Body:        tab.Body,
 			QueryParams: string(queryParamsJSON),
+			Docs:        tab.Docs,
 			IsActive:    tab.TabID == req.ActiveTabID,
 			SortOrder:   i,
 		}
