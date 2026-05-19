@@ -14,6 +14,7 @@ interface CollectionDataUpdate {
 interface Props {
   onRequestSelect: (request: any) => void;
   onLoadSavedResponse?: (response: PostmanResponse, collectionId: number, itemPath: string, responseIndex: number) => void;
+  onCollectionSettings?: (collectionId: number) => void;
   refreshTrigger: number;
   collectionDataUpdate?: CollectionDataUpdate | null;
 }
@@ -32,7 +33,7 @@ interface AddTarget {
   parentPath?: string;
 }
 
-export default function CollectionList({ onRequestSelect, onLoadSavedResponse, refreshTrigger, collectionDataUpdate }: Props) {
+export default function CollectionList({ onRequestSelect, onLoadSavedResponse, onCollectionSettings, refreshTrigger, collectionDataUpdate }: Props) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<Set<number>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -935,6 +936,17 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                 )}
               </div>
               <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCollectionSettings?.(collection.id); }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                  title="Collection settings (auth)"
+                  aria-label="Collection settings"
+                >
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
                 {expandedCollections.has(collection.id) && (
                   <>
                     <button

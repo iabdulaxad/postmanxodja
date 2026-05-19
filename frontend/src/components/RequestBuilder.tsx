@@ -53,6 +53,7 @@ interface Props {
     hasCollectionSource?: boolean;
     onSaveToCollection?: () => Promise<void> | void;
     initialDocs?: string;
+    collectionAuth?: Authorization;
 }
 
 export default function RequestBuilder({
@@ -69,6 +70,7 @@ export default function RequestBuilder({
                                            onEnvironmentChange,
                                            onSaveToCollection,
                                            initialDocs = '',
+                                           collectionAuth,
                                        }: Props) {
     const [method, setMethod] = useState(initialMethod);
     const [url, setUrl] = useState(initialUrl);
@@ -146,68 +148,63 @@ export default function RequestBuilder({
     const applyAuthToHeaders = (currentHeaders: Record<string, string>): Record<string, string> => {
         const headersWithAuth = { ...currentHeaders };
 
-        if (!auth || auth.type === 'noauth' || auth.type === 'inherit') {
+        // When inherit (or no auth set), fall back to collection-level auth
+        const a = (auth?.type === 'inherit' || !auth) ? collectionAuth : auth;
+
+        if (!a || a.type === 'noauth' || a.type === 'inherit') {
             return headersWithAuth;
         }
 
-        if (auth.type === 'basic' && auth.basic?.username) {
-            const credentials = btoa(`${auth.basic.username}:${auth.basic.password || ''}`);
+        if (a.type === 'basic' && a.basic?.username) {
+            const credentials = btoa(`${a.basic.username}:${a.basic.password || ''}`);
             headersWithAuth['Authorization'] = `Basic ${credentials}`;
         }
 
-        if (auth.type === 'bearer' && auth.bearer?.token) {
-            headersWithAuth['Authorization'] = `Bearer ${auth.bearer.token}`;
+        if (a.type === 'bearer' && a.bearer?.token) {
+            headersWithAuth['Authorization'] = `Bearer ${a.bearer.token}`;
         }
 
-        if (auth.type === 'jwt' && auth.jwt?.token) {
-            headersWithAuth['Authorization'] = `Bearer ${auth.jwt.token}`;
+        if (a.type === 'jwt' && a.jwt?.token) {
+            headersWithAuth['Authorization'] = `Bearer ${a.jwt.token}`;
         }
 
-        if (auth.type === 'digest' && auth.digest?.username) {
-            // Digest auth is typically handled by the backend
-            // For now, we'll store digest params as a header to be processed
-            headersWithAuth['X-Digest-Auth'] = JSON.stringify(auth.digest);
+        if (a.type === 'digest' && a.digest?.username) {
+            headersWithAuth['X-Digest-Auth'] = JSON.stringify(a.digest);
         }
 
-        if (auth.type === 'oauth1' && auth.oauth1?.accessToken) {
-            // OAuth 1.0 requires complex signing - typically handled by backend
-            headersWithAuth['X-OAuth1-Auth'] = JSON.stringify(auth.oauth1);
+        if (a.type === 'oauth1' && a.oauth1?.accessToken) {
+            headersWithAuth['X-OAuth1-Auth'] = JSON.stringify(a.oauth1);
         }
 
-        if (auth.type === 'oauth2' && auth.oauth2?.accessToken) {
-            const tokenType = auth.oauth2.tokenType || 'Bearer';
-            headersWithAuth['Authorization'] = `${tokenType} ${auth.oauth2.accessToken}`;
+        if (a.type === 'oauth2' && a.oauth2?.accessToken) {
+            const tokenType = a.oauth2.tokenType || 'Bearer';
+            headersWithAuth['Authorization'] = `${tokenType} ${a.oauth2.accessToken}`;
         }
 
-        if (auth.type === 'hawk' && auth.hawk?.authId) {
-            // Hawk auth requires complex header generation - typically handled by backend
-            headersWithAuth['X-Hawk-Auth'] = JSON.stringify(auth.hawk);
+        if (a.type === 'hawk' && a.hawk?.authId) {
+            headersWithAuth['X-Hawk-Auth'] = JSON.stringify(a.hawk);
         }
 
-        if (auth.type === 'awssig' && auth.awssig?.accessKey) {
-            // AWS Signature requires complex signing - typically handled by backend
-            headersWithAuth['X-AWS-Signature'] = JSON.stringify(auth.awssig);
+        if (a.type === 'awssig' && a.awssig?.accessKey) {
+            headersWithAuth['X-AWS-Signature'] = JSON.stringify(a.awssig);
         }
 
-        if (auth.type === 'ntlm' && auth.ntlm?.username) {
-            // NTLM requires complex negotiation - typically handled by backend
-            headersWithAuth['X-NTLM-Auth'] = JSON.stringify(auth.ntlm);
+        if (a.type === 'ntlm' && a.ntlm?.username) {
+            headersWithAuth['X-NTLM-Auth'] = JSON.stringify(a.ntlm);
         }
 
-        if (auth.type === 'apikey' && auth.apikey?.key && auth.apikey?.value) {
-            if (auth.apikey.addTo === 'header') {
-                headersWithAuth[auth.apikey.key] = auth.apikey.value;
+        if (a.type === 'apikey' && a.apikey?.key && a.apikey?.value) {
+            if (a.apikey.addTo === 'header') {
+                headersWithAuth[a.apikey.key] = a.apikey.value;
             }
         }
 
-        if (auth.type === 'akamai' && auth.akamai?.clientToken) {
-            // Akamai EdgeGrid requires complex header generation - typically handled by backend
-            headersWithAuth['X-Akamai-Auth'] = JSON.stringify(auth.akamai);
+        if (a.type === 'akamai' && a.akamai?.clientToken) {
+            headersWithAuth['X-Akamai-Auth'] = JSON.stringify(a.akamai);
         }
 
-        if (auth.type === 'asap' && auth.asap?.issuer) {
-            // ASAP requires JWT generation - typically handled by backend
-            headersWithAuth['X-ASAP-Auth'] = JSON.stringify(auth.asap);
+        if (a.type === 'asap' && a.asap?.issuer) {
+            headersWithAuth['X-ASAP-Auth'] = JSON.stringify(a.asap);
         }
 
         return headersWithAuth;
@@ -1100,6 +1097,7 @@ export default function RequestBuilder({
                     {activeSection === 'auth' && (
                         <AuthorizationPanel
                             auth={auth}
+                            collectionAuth={collectionAuth}
                             onAuthChange={(newAuth) => {
                                 setAuth(newAuth);
                                 notifyUpdate({ auth: newAuth });

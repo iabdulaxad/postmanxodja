@@ -268,8 +268,9 @@ func UpdateCollection(c *gin.Context) {
 	}
 
 	var req struct {
-		RawJSON string `json:"raw_json"`
-		Name    string `json:"name"`
+		RawJSON  string  `json:"raw_json"`
+		Name     string  `json:"name"`
+		AuthJSON *string `json:"auth_json"` // pointer: nil = not provided, "" = clear auth
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -278,8 +279,8 @@ func UpdateCollection(c *gin.Context) {
 	}
 
 	// At least one field must be provided
-	if req.RawJSON == "" && req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Either raw_json or name must be provided"})
+	if req.RawJSON == "" && req.Name == "" && req.AuthJSON == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "At least one of raw_json, name, or auth_json must be provided"})
 		return
 	}
 
@@ -311,6 +312,10 @@ func UpdateCollection(c *gin.Context) {
 			return
 		}
 		collection.RawJSON = updatedRawJSON
+	}
+
+	if req.AuthJSON != nil {
+		collection.AuthJSON = *req.AuthJSON
 	}
 
 	if err := database.GetDB().Save(&collection).Error; err != nil {

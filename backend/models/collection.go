@@ -8,6 +8,7 @@ type Collection struct {
 	Name          string    `json:"name"`
 	Description   string    `json:"description"`
 	RawJSON       string    `json:"raw_json" gorm:"type:text"`
+	AuthJSON      string    `json:"auth_json" gorm:"type:text"`
 	EnvironmentID *uint     `json:"environment_id" gorm:"index"`
 	TeamID        *uint     `json:"team_id" gorm:"index"`
 	CreatedAt     time.Time `json:"created_at"`

@@ -6,6 +6,8 @@ interface Props {
   onAuthChange: (auth: Authorization | undefined) => void;
   environments: Environment[];
   selectedEnvId?: number;
+  hideInherit?: boolean;
+  collectionAuth?: Authorization;
 }
 
 const AUTH_TYPES: { value: AuthType; label: string }[] = [
@@ -30,6 +32,8 @@ export default function AuthorizationPanel({
   onAuthChange,
   environments,
   selectedEnvId,
+  hideInherit = false,
+  collectionAuth,
 }: Props) {
   const authType = auth?.type || 'noauth';
 
@@ -61,7 +65,7 @@ export default function AuthorizationPanel({
           onChange={(e) => handleAuthTypeChange(e.target.value as AuthType)}
           className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
         >
-          {AUTH_TYPES.map((type) => (
+          {AUTH_TYPES.filter(t => !(hideInherit && t.value === 'inherit')).map((type) => (
             <option key={type.value} value={type.value}>
               {type.label}
             </option>
@@ -80,10 +84,19 @@ export default function AuthorizationPanel({
 
       {/* Inherit */}
       {authType === 'inherit' && (
-        <div className="p-3 bg-muted rounded-lg">
+        <div className="p-3 bg-muted rounded-lg space-y-1">
           <p className="text-sm text-muted-foreground italic">
-            This request will inherit authorization from parent
+            This request inherits authorization from the collection.
           </p>
+          {collectionAuth && collectionAuth.type !== 'noauth' ? (
+            <p className="text-xs text-primary font-medium">
+              Collection auth: {collectionAuth.type.charAt(0).toUpperCase() + collectionAuth.type.slice(1)}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No collection auth configured — open collection settings to set one.
+            </p>
+          )}
         </div>
       )}
 

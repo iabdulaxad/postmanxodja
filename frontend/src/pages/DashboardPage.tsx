@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import CollectionImporter from '../components/CollectionImporter';
 import CollectionList from '../components/CollectionList';
+import CollectionSettingsModal from '../components/CollectionSettingsModal';
 import RequestBuilder from '../components/RequestBuilder';
 import ResponseViewer from '../components/ResponseViewer';
 import EnvironmentPanel from '../components/EnvironmentPanel';
@@ -14,8 +15,8 @@ import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
 import PerformancePanel from '../components/PerformancePanel';
 import { useTeam } from '../contexts/TeamContext';
-import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment } from '../services/api';
-import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
+import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment, setCollectionAuth } from '../services/api';
+import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection, Authorization, Collection } from '../types';
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -71,6 +72,10 @@ export default function DashboardPage() {
     });
     // Map of collectionId -> environmentId (persisted per-collection env selection)
     const [collectionEnvMap, setCollectionEnvMap] = useState<Map<number, number | null>>(new Map());
+    // Map of collectionId -> Authorization (persisted per-collection auth)
+    const [collectionAuthMap, setCollectionAuthMap] = useState<Map<number, Authorization | undefined>>(new Map());
+    const [collectionsData, setCollectionsData] = useState<Collection[]>([]);
+    const [settingsCollectionId, setSettingsCollectionId] = useState<number | null>(null);
     const { currentTeam, isLoading } = useTeam();
 
     // Get current active tab
@@ -133,13 +138,21 @@ export default function DashboardPage() {
         if (!currentTeam) return;
         try {
             const collections = await getCollections(currentTeam.id);
-            const map = new Map<number, number | null>();
+            setCollectionsData(collections);
+            const envMap = new Map<number, number | null>();
+            const authMap = new Map<number, Authorization | undefined>();
             for (const col of collections) {
                 if (col.environment_id !== undefined) {
-                    map.set(col.id, col.environment_id ?? null);
+                    envMap.set(col.id, col.environment_id ?? null);
+                }
+                if (col.auth_json) {
+                    try {
+                        authMap.set(col.id, JSON.parse(col.auth_json));
+                    } catch { /* ignore */ }
                 }
             }
-            setCollectionEnvMap(map);
+            setCollectionEnvMap(envMap);
+            setCollectionAuthMap(authMap);
         } catch (err) {
             console.error('Failed to load collection env map:', err);
         }
@@ -361,6 +374,22 @@ export default function DashboardPage() {
     const handleEnvironmentsUpdate = () => {
         loadEnvironments();
     };
+
+    const handleCollectionAuthSave = useCallback(async (auth: Authorization | undefined) => {
+        if (!currentTeam || !settingsCollectionId) return;
+        const authJSON = auth ? JSON.stringify(auth) : '';
+        try {
+            await setCollectionAuth(currentTeam.id, settingsCollectionId, authJSON);
+            setCollectionAuthMap(prev => {
+                const next = new Map(prev);
+                next.set(settingsCollectionId, auth);
+                return next;
+            });
+        } catch (err) {
+            console.error('Failed to save collection auth:', err);
+        }
+        setSettingsCollectionId(null);
+    }, [currentTeam, settingsCollectionId]);
 
     // Helper function to save a specific tab to its collection
     const saveTabToCollection = useCallback(async (
@@ -822,6 +851,18 @@ export default function DashboardPage() {
                 onThirdAction={confirmModal.onThirdAction}
             />
 
+            {/* Collection Settings Modal */}
+            {settingsCollectionId && (
+                <CollectionSettingsModal
+                    isOpen={true}
+                    collectionName={collectionsData.find(c => c.id === settingsCollectionId)?.name || ''}
+                    initialAuth={collectionAuthMap.get(settingsCollectionId)}
+                    environments={environments}
+                    onSave={handleCollectionAuthSave}
+                    onClose={() => setSettingsCollectionId(null)}
+                />
+            )}
+
             {/* Collection Selector Modal */}
             <CollectionSelector
                 isOpen={collectionSelectorOpen}
@@ -894,6 +935,7 @@ export default function DashboardPage() {
                         <CollectionList
                             onRequestSelect={handleRequestSelect}
                             onLoadSavedResponse={handleLoadSavedResponse}
+                            onCollectionSettings={setSettingsCollectionId}
                             refreshTrigger={refreshTrigger}
                             collectionDataUpdate={collectionDataUpdate}
                         />
@@ -1046,6 +1088,7 @@ export default function DashboardPage() {
                                 onUpdate={handleTabUpdate}
                                 hasCollectionSource={!!activeTab?.collectionId}
                                 onSaveToCollection={handleSaveToCollection}
+                                collectionAuth={activeTab?.collectionId ? collectionAuthMap.get(activeTab.collectionId) : undefined}
                             />
                         }
                         bottomPanel={
