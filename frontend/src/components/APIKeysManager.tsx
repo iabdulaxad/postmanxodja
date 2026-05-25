@@ -3,6 +3,206 @@ import { getAPIKeys, createAPIKey, deleteAPIKey, APIKey, CreateAPIKeyRequest } f
 import { useTeam } from '../contexts/TeamContext';
 import ConfirmModal from './ConfirmModal';
 
+const MCP_TOOLS = [
+  { name: 'list_collections', desc: 'List all collections for a team' },
+  { name: 'get_collection', desc: 'Get a collection with full request tree' },
+  { name: 'create_collection', desc: 'Create a new collection or import Postman JSON' },
+  { name: 'update_collection', desc: 'Rename or replace a collection' },
+  { name: 'delete_collection', desc: 'Permanently delete a collection' },
+  { name: 'export_collection', desc: 'Export as Postman v2.1 JSON' },
+  { name: 'list_folders', desc: 'List folders inside a collection' },
+  { name: 'create_folder', desc: 'Add a folder to a collection' },
+  { name: 'rename_folder', desc: 'Rename a folder' },
+  { name: 'delete_folder', desc: 'Delete a folder' },
+  { name: 'add_request', desc: 'Add a request to a collection or folder' },
+  { name: 'update_request', desc: 'Update an existing request' },
+  { name: 'delete_request', desc: 'Delete a request' },
+  { name: 'list_environments', desc: 'List all environments' },
+  { name: 'create_environment', desc: 'Create a new environment' },
+  { name: 'get_environment', desc: 'Get environment details and variables' },
+  { name: 'update_environment', desc: 'Update environment name or variables' },
+  { name: 'delete_environment', desc: 'Delete an environment' },
+  { name: 'set_env_variable', desc: 'Set a single environment variable' },
+  { name: 'delete_env_variable', desc: 'Remove a variable from an environment' },
+  { name: 'execute_request', desc: 'Run an HTTP request with env variable substitution' },
+];
+
+type MCPTab = 'claude' | 'cursor' | 'generic';
+
+function MCPConnectDocs({ copyToClipboard }: { copyToClipboard: (text: string) => void }) {
+  const [tab, setTab] = useState<MCPTab>('claude');
+  const [showTools, setShowTools] = useState(false);
+  const BASE = 'https://postbaby.uz/mcp';
+
+  const claudeConfig = JSON.stringify({
+    mcpServers: {
+      postmanxodja: {
+        type: 'http',
+        url: BASE,
+        headers: { 'X-API-Key': 'pmx_your_api_key' },
+      },
+    },
+  }, null, 2);
+
+  const cursorConfig = JSON.stringify({
+    mcpServers: {
+      postmanxodja: {
+        url: BASE,
+        headers: { 'X-API-Key': 'pmx_your_api_key' },
+      },
+    },
+  }, null, 2);
+
+  const genericConfig = `URL:     ${BASE}
+Transport: Streamable HTTP (SSE)
+Header:  X-API-Key: pmx_your_api_key`;
+
+  const tabs: { id: MCPTab; label: string; file?: string; config: string }[] = [
+    {
+      id: 'claude',
+      label: 'Claude Code / Desktop',
+      file: '~/.claude.json  or  claude_desktop_config.json',
+      config: claudeConfig,
+    },
+    {
+      id: 'cursor',
+      label: 'Cursor',
+      file: '.cursor/mcp.json',
+      config: cursorConfig,
+    },
+    {
+      id: 'generic',
+      label: 'Any MCP Client',
+      config: genericConfig,
+    },
+  ];
+
+  const active = tabs.find(t => t.id === tab)!;
+
+  return (
+    <div className="mt-6 border border-border rounded-xl overflow-hidden">
+      <div className="bg-primary px-4 py-3">
+        <h3 className="font-semibold text-primary-foreground flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Connect via MCP (Claude, Cursor, …)
+        </h3>
+      </div>
+
+      <div className="p-4 space-y-4 bg-card">
+        <p className="text-sm text-muted-foreground">
+          PostmanXodja exposes a{' '}
+          <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer" className="text-primary underline">
+            Model Context Protocol
+          </a>{' '}
+          server. Add it to your AI tool so it can list, create, and execute your API requests directly.
+        </p>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                tab === t.id
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* File hint */}
+        {active.file && (
+          <div className="text-xs text-muted-foreground">
+            Add to <code className="bg-muted px-1 rounded">{active.file}</code>
+          </div>
+        )}
+
+        {/* Config block */}
+        <div className="relative">
+          <pre className="bg-foreground text-background p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre">
+            {active.config}
+          </pre>
+          <button
+            onClick={() => copyToClipboard(active.config)}
+            className="absolute top-2 right-2 px-2 py-1 bg-background/20 hover:bg-background/40 text-background rounded text-xs transition-colors"
+          >
+            Copy
+          </button>
+        </div>
+
+        {/* Claude Code quick-start */}
+        {tab === 'claude' && (
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">Or run this one-liner:</p>
+            <pre className="bg-foreground text-background p-2 rounded-lg font-mono overflow-x-auto whitespace-pre">
+{`claude mcp add postmanxodja --transport http \\
+  --url https://postbaby.uz/mcp \\
+  --header "X-API-Key: pmx_your_api_key"`}
+            </pre>
+            <button
+              onClick={() => copyToClipboard(`claude mcp add postmanxodja --transport http \\\n  --url https://postbaby.uz/mcp \\\n  --header "X-API-Key: pmx_your_api_key"`)}
+              className="text-primary hover:underline"
+            >
+              Copy command
+            </button>
+          </div>
+        )}
+
+        {/* Cursor note */}
+        {tab === 'cursor' && (
+          <p className="text-xs text-muted-foreground">
+            Open <strong>Cursor Settings → MCP</strong> and paste the config above, or edit{' '}
+            <code className="bg-muted px-1 rounded">.cursor/mcp.json</code> directly. Replace{' '}
+            <code className="bg-muted px-1 rounded">pmx_your_api_key</code> with a key from above.
+          </p>
+        )}
+
+        {/* Generic note */}
+        {tab === 'generic' && (
+          <p className="text-xs text-muted-foreground">
+            The server speaks the MCP Streamable HTTP transport (SSE). Point your client at the URL
+            above and add the <code className="bg-muted px-1 rounded">X-API-Key</code> header with
+            your API key.
+          </p>
+        )}
+
+        {/* Available Tools */}
+        <div>
+          <button
+            onClick={() => setShowTools(v => !v)}
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            <svg
+              className={`w-3 h-3 transition-transform ${showTools ? 'rotate-90' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            {showTools ? 'Hide' : 'Show'} available MCP tools ({MCP_TOOLS.length})
+          </button>
+
+          {showTools && (
+            <div className="mt-2 grid grid-cols-1 gap-1">
+              {MCP_TOOLS.map(tool => (
+                <div key={tool.name} className="flex items-start gap-2 p-2 bg-background rounded-lg">
+                  <code className="text-xs font-mono text-primary shrink-0">{tool.name}</code>
+                  <span className="text-xs text-muted-foreground">{tool.desc}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function APIKeysManager() {
   const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -294,6 +494,9 @@ export default function APIKeysManager() {
           </div>
         </div>
       </div>
+
+      {/* MCP Connect Section */}
+      <MCPConnectDocs copyToClipboard={copyToClipboard} />
 
       {/* Create Modal */}
       {showCreateModal && (

@@ -156,6 +156,125 @@ fi
 log_info "PostgreSQL configured successfully"
 
 #################################################
+# Install and Configure Grafana
+#################################################
+if ! command -v grafana-server &> /dev/null; then
+    log_info "Installing Grafana..."
+    apt-get install -y apt-transport-https software-properties-common wget
+    wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
+    apt-get update
+    apt-get install -y grafana
+else
+    log_info "Grafana already installed"
+fi
+
+log_info "Configuring Grafana..."
+cat > /etc/grafana/grafana.ini << 'GRAFANA_EOF'
+[server]
+http_port = 3001
+root_url = %(protocol)s://%(domain)s/grafana
+serve_from_sub_path = true
+
+[security]
+allow_embedding = true
+
+[auth.anonymous]
+enabled = true
+org_role = Viewer
+
+[users]
+allow_sign_up = false
+GRAFANA_EOF
+
+systemctl daemon-reload
+systemctl enable grafana-server
+systemctl restart grafana-server
+log_info "Grafana running on port 3001"
+
+#################################################
+# Install InfluxDB v1 (k6 metrics storage)
+#################################################
+if ! command -v influxd &> /dev/null; then
+    log_info "Installing InfluxDB v1..."
+    wget -q https://dl.influxdata.com/influxdb/releases/influxdb_1.8.10_amd64.deb
+    dpkg -i influxdb_1.8.10_amd64.deb
+    rm -f influxdb_1.8.10_amd64.deb
+else
+    log_info "InfluxDB already installed"
+fi
+
+systemctl enable influxdb
+systemctl start influxdb
+sleep 3
+
+# Create k6 database in InfluxDB
+influx -execute "CREATE DATABASE k6" 2>/dev/null || true
+log_info "InfluxDB ready with k6 database"
+
+#################################################
+# Install k6 with browser support
+#################################################
+if ! command -v k6 &> /dev/null; then
+    log_info "Installing k6..."
+    gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+        --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69 2>/dev/null || true
+    echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" > /etc/apt/sources.list.d/k6.list
+    apt-get update
+    apt-get install -y k6
+    # Install Chromium for k6 browser module
+    apt-get install -y chromium-browser 2>/dev/null || apt-get install -y chromium 2>/dev/null || true
+else
+    log_info "k6 already installed"
+fi
+
+#################################################
+# Provision Grafana datasource + k6 dashboard
+#################################################
+log_info "Provisioning Grafana datasources and dashboards..."
+
+mkdir -p /etc/grafana/provisioning/datasources
+cat > /etc/grafana/provisioning/datasources/influxdb.yml << 'PROV_EOF'
+apiVersion: 1
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    database: k6
+    isDefault: true
+    editable: true
+PROV_EOF
+
+# Remove file-based dashboard provisioning (using API import instead)
+rm -f /etc/grafana/provisioning/dashboards/k6.yml
+
+# Clean up any broken provisioned dashboard files
+rm -f /var/lib/grafana/dashboards/k6.json
+rm -f /var/lib/grafana/dashboards/k6-browser.json
+
+systemctl restart grafana-server
+sleep 5  # wait for Grafana to be ready
+
+# Import k6 dashboard via API (handles DS_K6 -> InfluxDB datasource mapping)
+log_info "Importing k6 dashboard into Grafana..."
+K6_DASH=$(curl -sf "https://grafana.com/api/dashboards/2587/revisions/latest/download" 2>/dev/null)
+if [ -n "$K6_DASH" ]; then
+    curl -s -X POST http://localhost:3001/grafana/api/dashboards/import \
+        -H "Content-Type: application/json" \
+        -u admin:admin \
+        -d "{
+            \"dashboard\": $K6_DASH,
+            \"overwrite\": true,
+            \"inputs\": [{\"name\": \"DS_K6\", \"type\": \"datasource\", \"pluginId\": \"influxdb\", \"value\": \"InfluxDB\"}]
+        }" && log_info "k6 dashboard imported" || log_warn "k6 dashboard import failed"
+else
+    log_warn "Could not download k6 dashboard"
+fi
+
+log_info "Grafana provisioned with InfluxDB datasource and k6 dashboard"
+
+#################################################
 # Create application directory
 #################################################
 log_info "Setting up application directory..."
@@ -238,6 +357,15 @@ log_info "  POSTGRES_HOST: ${_POSTGRES_HOST}"
 log_info "  POSTGRES_PASSWORD: $([ -n "$_POSTGRES_PASSWORD" ] && echo "***SET***" || echo "NOT_SET")"
 log_info "  GOOGLE_CLIENT_ID: $([ -n "$GOOGLE_CLIENT_ID" ] && echo "***SET***" || echo "NOT_SET")"
 log_info "  SMTP_HOST: $([ -n "$SMTP_HOST" ] && echo "${SMTP_HOST}" || echo "NOT_SET")"
+
+#################################################
+# Copy k6 scripts
+#################################################
+log_info "Setting up k6 scripts..."
+mkdir -p $APP_DIR/k6
+if [ -d "$APP_DIR/k6" ]; then
+    chmod +x $APP_DIR/k6/*.js 2>/dev/null || true
+fi
 
 #################################################
 # Build Frontend
@@ -360,6 +488,33 @@ server {
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
+
+    # MCP server — streamable HTTP + SSE, must be before the / catch-all
+    location /mcp {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 86400s;
+    }
+
+    # Grafana dashboard
+    location /grafana/ {
+        proxy_pass http://localhost:3001/grafana/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /grafana {
+        return 301 /grafana/;
+    }
 }
 EOF
 else
@@ -401,6 +556,33 @@ server {
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+    }
+
+    # MCP server — streamable HTTP + SSE, must be before the / catch-all
+    location /mcp {
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 86400s;
+    }
+
+    # Grafana dashboard
+    location /grafana/ {
+        proxy_pass http://localhost:3001/grafana/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /grafana {
+        return 301 /grafana/;
     }
 }
 EOF
@@ -475,6 +657,13 @@ if [ -f "/etc/systemd/system/postmanxodja-backend.service" ]; then
     else
         log_error "✗ Backend service is not running"
     fi
+fi
+
+# Check Grafana status
+if systemctl is-active --quiet grafana-server; then
+    log_info "✓ Grafana is running"
+else
+    log_error "✗ Grafana is not running"
 fi
 
 #################################################

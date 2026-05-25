@@ -12,7 +12,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateCollection creates a new empty collection
+// CreateCollection creates a new empty collection.
+//
+// @Summary     Create collection
+// @Description Create a new empty API collection for a team.
+// @Tags        collections
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       team_id  path      int                              true  "Team ID"
+// @Param       body     body      object{name=string,description=string}  true  "Collection info"
+// @Success     201      {object}  models.Collection
+// @Failure     400      {object}  object{error=string}
+// @Failure     500      {object}  object{error=string}
+// @Router      /api/teams/{team_id}/collections [post]
 func CreateCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 
@@ -156,7 +169,17 @@ func ImportCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, dbCollection)
 }
 
-// GetCollections returns all collections for a team
+// GetCollections returns all collections for a team.
+//
+// @Summary     List collections
+// @Description Get all collections belonging to a team.
+// @Tags        collections
+// @Produce     json
+// @Security    BearerAuth
+// @Param       team_id  path      int  true  "Team ID"
+// @Success     200      {array}   models.Collection
+// @Failure     500      {object}  object{error=string}
+// @Router      /api/teams/{team_id}/collections [get]
 func GetCollections(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 
@@ -170,7 +193,19 @@ func GetCollections(c *gin.Context) {
 	c.JSON(http.StatusOK, collections)
 }
 
-// GetCollection returns a specific collection with full details
+// GetCollection returns a specific collection with full details.
+//
+// @Summary     Get collection
+// @Description Get a collection with parsed Postman items.
+// @Tags        collections
+// @Produce     json
+// @Security    BearerAuth
+// @Param       team_id  path      int  true  "Team ID"
+// @Param       id       path      int  true  "Collection ID"
+// @Success     200      {object}  object{id=int,name=string,description=string,collection=models.PostmanCollection}
+// @Failure     400      {object}  object{error=string}
+// @Failure     404      {object}  object{error=string}
+// @Router      /api/teams/{team_id}/collections/{id} [get]
 func GetCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")
@@ -208,7 +243,21 @@ func GetCollection(c *gin.Context) {
 	})
 }
 
-// UpdateCollection updates a collection's raw JSON or name
+// UpdateCollection updates a collection's raw JSON or name.
+//
+// @Summary     Update collection
+// @Description Update a collection — pass raw_json to replace all items or name to rename only.
+// @Tags        collections
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       team_id  path      int                                     true  "Team ID"
+// @Param       id       path      int                                     true  "Collection ID"
+// @Param       body     body      object{raw_json=string,name=string}     false "Update payload"
+// @Success     200      {object}  models.Collection
+// @Failure     400      {object}  object{error=string}
+// @Failure     404      {object}  object{error=string}
+// @Router      /api/teams/{team_id}/collections/{id} [put]
 func UpdateCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")
@@ -219,8 +268,9 @@ func UpdateCollection(c *gin.Context) {
 	}
 
 	var req struct {
-		RawJSON string `json:"raw_json"`
-		Name    string `json:"name"`
+		RawJSON  string  `json:"raw_json"`
+		Name     string  `json:"name"`
+		AuthJSON *string `json:"auth_json"` // pointer: nil = not provided, "" = clear auth
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -229,8 +279,8 @@ func UpdateCollection(c *gin.Context) {
 	}
 
 	// At least one field must be provided
-	if req.RawJSON == "" && req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Either raw_json or name must be provided"})
+	if req.RawJSON == "" && req.Name == "" && req.AuthJSON == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "At least one of raw_json, name, or auth_json must be provided"})
 		return
 	}
 
@@ -264,6 +314,10 @@ func UpdateCollection(c *gin.Context) {
 		collection.RawJSON = updatedRawJSON
 	}
 
+	if req.AuthJSON != nil {
+		collection.AuthJSON = *req.AuthJSON
+	}
+
 	if err := database.GetDB().Save(&collection).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update collection"})
 		return
@@ -272,7 +326,17 @@ func UpdateCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, collection)
 }
 
-// DeleteCollection deletes a collection
+// DeleteCollection deletes a collection.
+//
+// @Summary     Delete collection
+// @Tags        collections
+// @Produce     json
+// @Security    BearerAuth
+// @Param       team_id  path      int  true  "Team ID"
+// @Param       id       path      int  true  "Collection ID"
+// @Success     200      {object}  object{message=string}
+// @Failure     404      {object}  object{error=string}
+// @Router      /api/teams/{team_id}/collections/{id} [delete]
 func DeleteCollection(c *gin.Context) {
 	teamID := c.GetUint("team_id")
 	id := c.Param("id")

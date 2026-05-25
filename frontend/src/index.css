@@ -210,6 +210,21 @@ body {
     color: var(--foreground);
 }
 
+/* Merged mode — no border/radius, used inside grouped input rows */
+.vi-editor-wrapper.vi-no-border {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+.vi-editor-wrapper.vi-no-border:focus-within {
+    border: none;
+    box-shadow: none;
+}
+.dark .vi-editor-wrapper.vi-no-border:focus-within {
+    border: none;
+    box-shadow: none;
+}
+
 /* Single-line mode — scroll horizontally for long text, clip vertically */
 .vi-singleline {
     overflow-x: auto;

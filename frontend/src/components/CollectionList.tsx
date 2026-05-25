@@ -14,6 +14,7 @@ interface CollectionDataUpdate {
 interface Props {
   onRequestSelect: (request: any) => void;
   onLoadSavedResponse?: (response: PostmanResponse, collectionId: number, itemPath: string, responseIndex: number) => void;
+  onCollectionSettings?: (collectionId: number) => void;
   refreshTrigger: number;
   collectionDataUpdate?: CollectionDataUpdate | null;
 }
@@ -32,7 +33,7 @@ interface AddTarget {
   parentPath?: string;
 }
 
-export default function CollectionList({ onRequestSelect, onLoadSavedResponse, refreshTrigger, collectionDataUpdate }: Props) {
+export default function CollectionList({ onRequestSelect, onLoadSavedResponse, onCollectionSettings, refreshTrigger, collectionDataUpdate }: Props) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [expandedCollections, setExpandedCollections] = useState<Set<number>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -48,6 +49,8 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
   const [renamingCollectionId, setRenamingCollectionId] = useState<number | null>(null);
   const [collectionRenameValue, setCollectionRenameValue] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
+  const [dragState, setDragState] = useState<{ collectionId: number; path: string; type: 'folder' | 'request' } | null>(null);
+  const [dropTargetPath, setDropTargetPath] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentTeam) {
@@ -306,6 +309,42 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
     };
   };
 
+  const findItemAtPath = (collection: PostmanCollection, path: string): PostmanItem | null => {
+    const pathParts = path.split('/');
+    let currentItems = collection.item;
+    let found: PostmanItem | null = null;
+    for (let i = 0; i < pathParts.length; i++) {
+      found = currentItems.find(item => item.name === pathParts[i]) ?? null;
+      if (!found) return null;
+      if (i < pathParts.length - 1) {
+        if (!found.item) return null;
+        currentItems = found.item;
+      }
+    }
+    return found;
+  };
+
+  const isAncestorOrSelf = (sourcePath: string, targetPath: string): boolean => {
+    return targetPath === sourcePath || targetPath.startsWith(sourcePath + '/');
+  };
+
+  const handleMoveItem = async (collectionId: number, sourcePath: string, targetFolderPath: string) => {
+    if (!currentTeam) return;
+    const collection = collectionData.get(collectionId);
+    if (!collection) return;
+    const sourceItem = findItemAtPath(collection, sourcePath);
+    if (!sourceItem) return;
+    const collWithoutSource = deleteItemFromCollection(collection, sourcePath);
+    const updatedCollection = addItemToCollection(collWithoutSource, targetFolderPath, sourceItem);
+    try {
+      await updateCollection(currentTeam.id, collectionId, { raw_json: JSON.stringify(updatedCollection) });
+      setCollectionData(new Map(collectionData.set(collectionId, updatedCollection)));
+      setExpandedFolders(prev => new Set(prev).add(targetFolderPath));
+    } catch (err) {
+      console.error('Failed to move item:', err);
+    }
+  };
+
   const toggleFolder = (folderPath: string) => {
     const newExpanded = new Set(expandedFolders);
     if (newExpanded.has(folderPath)) {
@@ -470,7 +509,17 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
           <div
             className="group py-1 px-2 cursor-pointer border-b border-border hover:bg-primary/10 flex items-center"
             style={{ paddingLeft }}
-            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, collectionId, itemPath })}
+            draggable
+            onDragStart={(e) => {
+              e.stopPropagation();
+              setDragState({ collectionId, path: itemPath, type: 'request' });
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragEnd={() => {
+              setDragState(null);
+              setDropTargetPath(null);
+            }}
+            onClick={() => !isRenaming && onRequestSelect({ ...item.request, name: item.name, description: item.description || '', collectionId, itemPath })}
           >
             <div
               className="flex-1 flex items-center gap-2 min-w-0 overflow-hidden"
@@ -614,10 +663,61 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
       const isRenaming = renamingItem?.collectionId === collectionId && renamingItem?.path === itemPath;
 
       return (
-        <div key={itemPath}>
+        <div
+          key={itemPath}
+          onDragOver={(e) => {
+            if (
+              dragState &&
+              dragState.collectionId === collectionId &&
+              !isAncestorOrSelf(dragState.path, itemPath) &&
+              dragState.path !== itemPath
+            ) {
+              const sourceParent = dragState.path.includes('/')
+                ? dragState.path.substring(0, dragState.path.lastIndexOf('/'))
+                : '';
+              if (sourceParent === itemPath) return;
+              e.preventDefault();
+              e.stopPropagation();
+              setDropTargetPath(itemPath);
+            }
+          }}
+          onDragLeave={(e) => {
+            if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget as Node)) {
+              setDropTargetPath(prev => prev === itemPath ? null : prev);
+            }
+          }}
+          onDrop={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!dragState || dragState.collectionId !== collectionId) return;
+            if (isAncestorOrSelf(dragState.path, itemPath)) return;
+            const sourceParent = dragState.path.includes('/')
+              ? dragState.path.substring(0, dragState.path.lastIndexOf('/'))
+              : '';
+            if (sourceParent === itemPath) return;
+            setDropTargetPath(null);
+            const src = dragState.path;
+            setDragState(null);
+            await handleMoveItem(collectionId, src, itemPath);
+          }}
+        >
           <div
-            className="group py-1 px-2 font-medium bg-muted text-foreground text-xs cursor-pointer hover:bg-accent flex items-center gap-1.5"
+            className={`group py-1 px-2 font-medium text-foreground text-xs cursor-pointer flex items-center gap-1.5 transition-colors ${
+              dropTargetPath === itemPath && dragState?.collectionId === collectionId
+                ? 'bg-primary/20 ring-1 ring-inset ring-primary'
+                : 'bg-muted hover:bg-accent'
+            }`}
             style={{ paddingLeft }}
+            draggable
+            onDragStart={(e) => {
+              e.stopPropagation();
+              setDragState({ collectionId, path: itemPath, type: 'folder' });
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragEnd={() => {
+              setDragState(null);
+              setDropTargetPath(null);
+            }}
           >
             <div className="flex-1 flex items-center gap-1.5 min-w-0 overflow-hidden" onClick={() => !isRenaming && toggleFolder(itemPath)}>
               <svg className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -836,6 +936,17 @@ export default function CollectionList({ onRequestSelect, onLoadSavedResponse, r
                 )}
               </div>
               <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCollectionSettings?.(collection.id); }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                  title="Collection settings (auth)"
+                  aria-label="Collection settings"
+                >
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
                 {expandedCollections.has(collection.id) && (
                   <>
                     <button

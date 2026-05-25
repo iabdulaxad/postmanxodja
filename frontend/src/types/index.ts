@@ -59,6 +59,7 @@ export interface Collection {
     name: string;
     description: string;
     raw_json?: string;
+    auth_json?: string;
     environment_id?: number | null;
     team_id?: number;
     created_at: string;
@@ -79,6 +80,7 @@ export interface PostmanCollection {
 
 export interface PostmanItem {
     name: string;
+    description?: string;
     request?: PostmanRequest;
     response?: PostmanResponse[];
     item?: PostmanItem[];
@@ -335,6 +337,7 @@ export interface RequestTab {
     collectionId?: number;
     itemPath?: string; // Path to the item in the collection (e.g., "folder1/folder2/request")
     savedResponseIndex?: number; // Index of saved response this tab was opened from
+    docs?: string;
 }
 
 // WebSocket types

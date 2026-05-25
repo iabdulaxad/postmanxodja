@@ -1,0 +1,821 @@
+basePath: /
+definitions:
+  models.Collection:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      environment_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      raw_json:
+        type: string
+      team_id:
+        type: integer
+    type: object
+  models.Environment:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      team_id:
+        type: integer
+      variables:
+        $ref: '#/definitions/models.Variables'
+    type: object
+  models.ExecuteRequest:
+    properties:
+      body:
+        type: string
+      environment_id:
+        type: integer
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      query_params:
+        additionalProperties:
+          type: string
+        type: object
+      url:
+        type: string
+    type: object
+  models.ExecuteResponse:
+    properties:
+      body:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      status:
+        type: integer
+      status_text:
+        type: string
+      time:
+        description: milliseconds
+        type: integer
+    type: object
+  models.PostmanAuth:
+    properties:
+      apikey:
+        items:
+          $ref: '#/definitions/models.PostmanAuthParameter'
+        type: array
+      basic:
+        items:
+          $ref: '#/definitions/models.PostmanAuthParameter'
+        type: array
+      bearer:
+        items:
+          $ref: '#/definitions/models.PostmanAuthParameter'
+        type: array
+      oauth2:
+        items:
+          $ref: '#/definitions/models.PostmanAuthParameter'
+        type: array
+      type:
+        description: bearer, basic, apikey, oauth2, etc.
+        type: string
+    type: object
+  models.PostmanAuthParameter:
+    properties:
+      key:
+        type: string
+      type:
+        type: string
+      value: {}
+    type: object
+  models.PostmanBodyOptions:
+    properties:
+      raw:
+        $ref: '#/definitions/models.PostmanRawOptions'
+    type: object
+  models.PostmanCollection:
+    properties:
+      info:
+        $ref: '#/definitions/models.PostmanInfo'
+      item:
+        items:
+          $ref: '#/definitions/models.PostmanItem'
+        type: array
+      variable:
+        items:
+          $ref: '#/definitions/models.PostmanVariable'
+        type: array
+    type: object
+  models.PostmanFormData:
+    properties:
+      description:
+        type: string
+      disabled:
+        type: boolean
+      key:
+        type: string
+      type:
+        description: text, file
+        type: string
+      value:
+        type: string
+    type: object
+  models.PostmanInfo:
+    properties:
+      _collection_link:
+        type: string
+      _exporter_id:
+        type: string
+      _postman_id:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      schema:
+        type: string
+    type: object
+  models.PostmanItem:
+    properties:
+      item:
+        description: For folders
+        items:
+          $ref: '#/definitions/models.PostmanItem'
+        type: array
+      name:
+        type: string
+      request:
+        $ref: '#/definitions/models.PostmanRequest'
+      response:
+        description: Saved example responses
+        items:
+          $ref: '#/definitions/models.PostmanResponse'
+        type: array
+    type: object
+  models.PostmanKeyValue:
+    properties:
+      description:
+        type: string
+      disabled:
+        type: boolean
+      key:
+        type: string
+      value: {}
+    type: object
+  models.PostmanRawOptions:
+    properties:
+      language:
+        type: string
+    type: object
+  models.PostmanRequest:
+    properties:
+      auth:
+        $ref: '#/definitions/models.PostmanAuth'
+      body:
+        $ref: '#/definitions/models.PostmanRequestBody'
+      header:
+        items:
+          $ref: '#/definitions/models.PostmanKeyValue'
+        type: array
+      method:
+        type: string
+      url:
+        description: Can be string or PostmanURL
+    type: object
+  models.PostmanRequestBody:
+    properties:
+      formdata:
+        items:
+          $ref: '#/definitions/models.PostmanFormData'
+        type: array
+      mode:
+        description: raw, formdata, urlencoded
+        type: string
+      options:
+        $ref: '#/definitions/models.PostmanBodyOptions'
+      raw:
+        type: string
+      urlencoded:
+        items:
+          $ref: '#/definitions/models.PostmanUrlEncoded'
+        type: array
+    type: object
+  models.PostmanResponse:
+    properties:
+      body:
+        type: string
+      code:
+        type: integer
+      header:
+        items:
+          $ref: '#/definitions/models.PostmanKeyValue'
+        type: array
+      name:
+        type: string
+      originalRequest:
+        $ref: '#/definitions/models.PostmanRequest'
+      responseTime:
+        type: integer
+      status:
+        type: string
+    type: object
+  models.PostmanUrlEncoded:
+    properties:
+      description:
+        type: string
+      disabled:
+        type: boolean
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  models.PostmanVariable:
+    properties:
+      key:
+        type: string
+      type:
+        type: string
+      value:
+        type: string
+    type: object
+  models.Variables:
+    additionalProperties:
+      type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: Support
+    url: https://postbaby.uz
+  description: Postman-like API testing platform. Authenticate with Bearer JWT for
+    /api/* routes, or X-API-Key for /api/v1/* routes.
+  license:
+    name: MIT
+  termsOfService: https://postbaby.uz
+  title: Postmanxodja API
+  version: "1.0"
+paths:
+  /api/requests/execute:
+    post:
+      consumes:
+      - application/json
+      description: Proxy an HTTP request through the server, substituting {{variable}}
+        placeholders from the chosen environment.
+      parameters:
+      - description: Request to execute
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExecuteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ExecuteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Execute request
+      tags:
+      - requests
+  /api/teams/{team_id}/collections:
+    get:
+      description: Get all collections belonging to a team.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Collection'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List collections
+      tags:
+      - collections
+    post:
+      consumes:
+      - application/json
+      description: Create a new empty API collection for a team.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Collection info
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            description:
+              type: string
+            name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create collection
+      tags:
+      - collections
+  /api/teams/{team_id}/collections/{id}:
+    delete:
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete collection
+      tags:
+      - collections
+    get:
+      description: Get a collection with parsed Postman items.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              collection:
+                $ref: '#/definitions/models.PostmanCollection'
+              description:
+                type: string
+              id:
+                type: integer
+              name:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get collection
+      tags:
+      - collections
+    put:
+      consumes:
+      - application/json
+      description: Update a collection — pass raw_json to replace all items or name
+        to rename only.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: body
+        schema:
+          properties:
+            name:
+              type: string
+            raw_json:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update collection
+      tags:
+      - collections
+  /api/teams/{team_id}/environments:
+    get:
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Environment'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List environments
+      tags:
+      - environments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Environment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Environment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Environment'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create environment
+      tags:
+      - environments
+  /api/teams/{team_id}/environments/{id}:
+    delete:
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Environment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete environment
+      tags:
+      - environments
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Environment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated environment
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Environment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Environment'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update environment
+      tags:
+      - environments
+  /api/v1/collections:
+    get:
+      description: List collections using an API key. Useful for CI/CD and third-party
+        integrations.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Collection'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: List collections (API key)
+      tags:
+      - public-api
+    post:
+      consumes:
+      - application/json
+      description: Accepts either {"raw_json":"..."}, {"name":"...","description":"..."},
+        or a raw Postman collection JSON body.
+      parameters:
+      - description: Collection payload
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create collection (API key)
+      tags:
+      - public-api
+  /api/v1/collections/{id}:
+    delete:
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              message:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete collection (API key)
+      tags:
+      - public-api
+    get:
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              collection:
+                $ref: '#/definitions/models.PostmanCollection'
+              id:
+                type: integer
+              name:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get collection (API key)
+      tags:
+      - public-api
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New collection JSON
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            raw_json:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Update collection (API key)
+      tags:
+      - public-api
+securityDefinitions:
+  ApiKeyAuth:
+    description: Team API key (prefix pmx_).
+    in: header
+    name: X-API-Key
+    type: apiKey
+  BearerAuth:
+    description: Type "Bearer " followed by your JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

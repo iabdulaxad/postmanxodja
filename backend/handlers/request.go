@@ -18,7 +18,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ExecuteRequest executes an HTTP request with variable substitution
+// ExecuteRequest executes an HTTP request with variable substitution.
+//
+// @Summary     Execute request
+// @Description Proxy an HTTP request through the server, substituting {{variable}} placeholders from the chosen environment.
+// @Tags        requests
+// @Accept      json
+// @Produce     json
+// @Security    BearerAuth
+// @Param       body  body      models.ExecuteRequest   true  "Request to execute"
+// @Success     200   {object}  models.ExecuteResponse
+// @Failure     400   {object}  object{error=string}
+// @Failure     500   {object}  object{error=string}
+// @Router      /api/requests/execute [post]
 func ExecuteRequest(c *gin.Context) {
 	var req models.ExecuteRequest
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import CollectionImporter from '../components/CollectionImporter';
 import CollectionList from '../components/CollectionList';
+import CollectionSettingsModal from '../components/CollectionSettingsModal';
 import RequestBuilder from '../components/RequestBuilder';
 import ResponseViewer from '../components/ResponseViewer';
 import WebSocketBuilder from '../components/WebSocketBuilder';
@@ -13,9 +14,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import CollectionSelector from '../components/CollectionSelector';
 import UCodeImportModal from '../components/UCodeImportModal';
 import Header from '../components/layout/Header';
+import PerformancePanel from '../components/PerformancePanel';
 import { useTeam } from '../contexts/TeamContext';
-import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment } from '../services/api';
-import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection } from '../types';
+import { getEnvironments, getSavedTabs, getCollection, updateCollection, importCollection, getCollections, setCollectionEnvironment, setCollectionAuth } from '../services/api';
+import type { ExecuteResponse, Environment, RequestTab, SentRequest, PostmanResponse, PostmanCollection, Authorization, Collection } from '../types';
 
 // Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -42,6 +44,8 @@ export default function DashboardPage() {
     const [environments, setEnvironments] = useState<Environment[]>([]);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [showGrafana, setShowGrafana] = useState(false);
+    const [showPerformance, setShowPerformance] = useState(false);
     const [responseCollapsed, setResponseCollapsed] = useState(false);
     const [curlImportOpen, setCurlImportOpen] = useState(false);
     const [ucodeImportOpen, setUcodeImportOpen] = useState(false);
@@ -69,6 +73,10 @@ export default function DashboardPage() {
     });
     // Map of collectionId -> environmentId (persisted per-collection env selection)
     const [collectionEnvMap, setCollectionEnvMap] = useState<Map<number, number | null>>(new Map());
+    // Map of collectionId -> Authorization (persisted per-collection auth)
+    const [collectionAuthMap, setCollectionAuthMap] = useState<Map<number, Authorization | undefined>>(new Map());
+    const [collectionsData, setCollectionsData] = useState<Collection[]>([]);
+    const [settingsCollectionId, setSettingsCollectionId] = useState<number | null>(null);
     const { currentTeam, isLoading } = useTeam();
 
     // Get current active tab
@@ -90,6 +98,7 @@ export default function DashboardPage() {
                         headers: Object.entries(t.headers || {}).map(([key, value]) => ({ key, value })),
                         body: t.body,
                         queryParams: Object.entries(t.query_params || {}).map(([key, value]) => ({ key, value })),
+                        docs: t.docs || '',
                     }));
                     setTabs(loadedTabs);
                     const activeTab = savedTabs.find(t => t.is_active);
@@ -130,13 +139,21 @@ export default function DashboardPage() {
         if (!currentTeam) return;
         try {
             const collections = await getCollections(currentTeam.id);
-            const map = new Map<number, number | null>();
+            setCollectionsData(collections);
+            const envMap = new Map<number, number | null>();
+            const authMap = new Map<number, Authorization | undefined>();
             for (const col of collections) {
                 if (col.environment_id !== undefined) {
-                    map.set(col.id, col.environment_id ?? null);
+                    envMap.set(col.id, col.environment_id ?? null);
+                }
+                if (col.auth_json) {
+                    try {
+                        authMap.set(col.id, JSON.parse(col.auth_json));
+                    } catch { /* ignore */ }
                 }
             }
-            setCollectionEnvMap(map);
+            setCollectionEnvMap(envMap);
+            setCollectionAuthMap(authMap);
         } catch (err) {
             console.error('Failed to load collection env map:', err);
         }
@@ -258,6 +275,7 @@ export default function DashboardPage() {
             headers,
             body: request.body?.raw || '',
             queryParams,
+            docs: request.description || '',
             request,
             // Store collection source info for syncing changes back
             collectionId: request.collectionId,
@@ -373,6 +391,22 @@ export default function DashboardPage() {
         loadEnvironments();
     };
 
+    const handleCollectionAuthSave = useCallback(async (auth: Authorization | undefined) => {
+        if (!currentTeam || !settingsCollectionId) return;
+        const authJSON = auth ? JSON.stringify(auth) : '';
+        try {
+            await setCollectionAuth(currentTeam.id, settingsCollectionId, authJSON);
+            setCollectionAuthMap(prev => {
+                const next = new Map(prev);
+                next.set(settingsCollectionId, auth);
+                return next;
+            });
+        } catch (err) {
+            console.error('Failed to save collection auth:', err);
+        }
+        setSettingsCollectionId(null);
+    }, [currentTeam, settingsCollectionId]);
+
     // Helper function to save a specific tab to its collection
     const saveTabToCollection = useCallback(async (
         tab: RequestTab,
@@ -423,6 +457,7 @@ export default function DashboardPage() {
                                 return {
                                     ...item,
                                     name: tab.name,
+                                    description: tab.docs || item.description || '',
                                     request: requestData,
                                 };
                             }
@@ -450,6 +485,7 @@ export default function DashboardPage() {
                 // New request - add it to the collection at the specified folder path or root level
                 const newRequest = {
                     name: tab.name,
+                    description: tab.docs || '',
                     request: requestData,
                 };
 
@@ -831,6 +867,18 @@ export default function DashboardPage() {
                 onThirdAction={confirmModal.onThirdAction}
             />
 
+            {/* Collection Settings Modal */}
+            {settingsCollectionId && (
+                <CollectionSettingsModal
+                    isOpen={true}
+                    collectionName={collectionsData.find(c => c.id === settingsCollectionId)?.name || ''}
+                    initialAuth={collectionAuthMap.get(settingsCollectionId)}
+                    environments={environments}
+                    onSave={handleCollectionAuthSave}
+                    onClose={() => setSettingsCollectionId(null)}
+                />
+            )}
+
             {/* Collection Selector Modal */}
             <CollectionSelector
                 isOpen={collectionSelectorOpen}
@@ -866,6 +914,24 @@ export default function DashboardPage() {
                                 collectionDataUpdate={collectionDataUpdate}
                             />
                         </div>
+                        <button
+                            onClick={() => { setShowGrafana(v => !v); setShowPerformance(false); setMobileSidebarOpen(false); }}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                        >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Grafana
+                        </button>
+                        <button
+                            onClick={() => { setShowPerformance(v => !v); setShowGrafana(false); setMobileSidebarOpen(false); }}
+                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showPerformance ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                        >
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Performance
+                        </button>
                         <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                     </div>
                 </div>
@@ -885,10 +951,29 @@ export default function DashboardPage() {
                         <CollectionList
                             onRequestSelect={handleRequestSelect}
                             onLoadSavedResponse={handleLoadSavedResponse}
+                            onCollectionSettings={setSettingsCollectionId}
                             refreshTrigger={refreshTrigger}
                             collectionDataUpdate={collectionDataUpdate}
                         />
                     </div>
+                    <button
+                        onClick={() => { setShowGrafana(v => !v); setShowPerformance(false); }}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showGrafana ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                    >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Grafana
+                    </button>
+                    <button
+                        onClick={() => { setShowPerformance(v => !v); setShowGrafana(false); }}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-t border-border transition-colors ${showPerformance ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent'}`}
+                    >
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Performance
+                    </button>
                     <EnvironmentPanel onUpdate={handleEnvironmentsUpdate} />
                 </HorizontalSplitter>
             </div>
@@ -898,7 +983,60 @@ export default function DashboardPage() {
                 {/* Header */}
                 <Header onToggleSidebar={toggleMobileSidebar} />
 
-                {/* Tabs Bar */}
+                {/* Grafana View */}
+                {showGrafana && (
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card flex-shrink-0">
+                            <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                Grafana
+                            </span>
+                            <button
+                                onClick={() => setShowGrafana(false)}
+                                className="p-1 text-muted-foreground hover:bg-accent rounded"
+                                title="Close Grafana"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <iframe
+                            src={import.meta.env.VITE_GRAFANA_URL || '/grafana'}
+                            className="flex-1 w-full border-0"
+                            title="Grafana"
+                            allow="fullscreen"
+                        />
+                    </div>
+                )}
+
+                {/* Performance View */}
+                {showPerformance && (
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card flex-shrink-0">
+                            <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Performance Testing
+                            </span>
+                            <button
+                                onClick={() => setShowPerformance(false)}
+                                className="p-1 text-muted-foreground hover:bg-accent rounded"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <PerformancePanel />
+                    </div>
+                )}
+
+                {/* Tabs + Request Area */}
+                {!showGrafana && !showPerformance && <>
                 <TabsBar
                     tabs={tabs}
                     activeTabId={activeTabId}
@@ -966,6 +1104,7 @@ export default function DashboardPage() {
                                 initialBody={activeTab?.body || ''}
                                 initialQueryParams={activeTab?.queryParams || {}}
                                 initialName={activeTab?.name || 'Untitled'}
+                                initialDocs={activeTab?.docs || ''}
                                 environments={environments}
                                 initialEnvId={initialEnvId}
                                 onEnvironmentChange={activeTab?.collectionId ? handleCollectionEnvChange : undefined}
@@ -973,6 +1112,7 @@ export default function DashboardPage() {
                                 onUpdate={handleTabUpdate}
                                 hasCollectionSource={!!activeTab?.collectionId}
                                 onSaveToCollection={handleSaveToCollection}
+                                collectionAuth={activeTab?.collectionId ? collectionAuthMap.get(activeTab.collectionId) : undefined}
                             />
                         }
                         bottomPanel={
@@ -985,6 +1125,8 @@ export default function DashboardPage() {
                         }
                     />
                 )}
+                    </>}
+
             </div>
         </div>
     );

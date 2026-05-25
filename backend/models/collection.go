@@ -8,6 +8,7 @@ type Collection struct {
 	Name          string    `json:"name"`
 	Description   string    `json:"description"`
 	RawJSON       string    `json:"raw_json" gorm:"type:text"`
+	AuthJSON      string    `json:"auth_json" gorm:"type:text"`
 	EnvironmentID *uint     `json:"environment_id" gorm:"index"`
 	TeamID        *uint     `json:"team_id" gorm:"index"`
 	CreatedAt     time.Time `json:"created_at"`
@@ -30,10 +31,11 @@ type PostmanInfo struct {
 }
 
 type PostmanItem struct {
-	Name     string            `json:"name"`
-	Request  *PostmanRequest   `json:"request,omitempty"`
-	Response []PostmanResponse `json:"response,omitempty"` // Saved example responses
-	Item     []PostmanItem     `json:"item"`               // For folders
+	Name        string            `json:"name"`
+	Description string            `json:"description,omitempty"`
+	Request     *PostmanRequest   `json:"request,omitempty"`
+	Response    []PostmanResponse `json:"response,omitempty"` // Saved example responses
+	Item        []PostmanItem     `json:"item"`               // For folders
 }
 
 // PostmanResponse represents a saved example response (Postman collection v2.1 format)

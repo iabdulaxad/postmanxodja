@@ -1,4 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
+import { marked } from 'marked';
+
+function stripBodyComments(body: string): string {
+    let result = '';
+    let i = 0;
+    while (i < body.length) {
+        if (body[i] === '"') {
+            result += body[i++];
+            while (i < body.length) {
+                if (body[i] === '\\') {
+                    result += body[i] + (body[i + 1] ?? '');
+                    i += 2;
+                } else if (body[i] === '"') {
+                    result += body[i++];
+                    break;
+                } else {
+                    result += body[i++];
+                }
+            }
+        } else if (body[i] === '/' && body[i + 1] === '/') {
+            while (i < body.length && body[i] !== '\n') i++;
+        } else if (body[i] === '/' && body[i + 1] === '*') {
+            i += 2;
+            while (i < body.length && !(body[i] === '*' && body[i + 1] === '/')) i++;
+            i += 2;
+        } else {
+            result += body[i++];
+        }
+    }
+    return result;
+}
 import { executeRequest } from '../services/api';
 import VariableInput from './VariableInput';
 import JsonTreeEditor from './JsonTreeEditor';
@@ -21,6 +52,8 @@ interface Props {
     onEnvironmentChange?: (envId: number | undefined) => void;
     hasCollectionSource?: boolean;
     onSaveToCollection?: () => Promise<void> | void;
+    initialDocs?: string;
+    collectionAuth?: Authorization;
 }
 
 export default function RequestBuilder({
@@ -36,6 +69,8 @@ export default function RequestBuilder({
                                            onUpdate,
                                            onEnvironmentChange,
                                            onSaveToCollection,
+                                           initialDocs = '',
+                                           collectionAuth,
                                        }: Props) {
     const [method, setMethod] = useState(initialMethod);
     const [url, setUrl] = useState(initialUrl);
@@ -50,7 +85,9 @@ export default function RequestBuilder({
     );
     const [selectedEnvId, setSelectedEnvId] = useState<number | undefined>(initialEnvId);
     const [loading, setLoading] = useState(false);
-    const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body' | 'auth'>('params');
+    const [activeSection, setActiveSection] = useState<'params' | 'headers' | 'body' | 'auth' | 'docs'>('params');
+    const [docs, setDocs] = useState(initialDocs);
+    const [docsEditMode, setDocsEditMode] = useState(false);
     const [curlCopied, setCurlCopied] = useState(false);
     const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('raw');
     const [auth, setAuth] = useState<Authorization | undefined>();
@@ -111,68 +148,63 @@ export default function RequestBuilder({
     const applyAuthToHeaders = (currentHeaders: Record<string, string>): Record<string, string> => {
         const headersWithAuth = { ...currentHeaders };
 
-        if (!auth || auth.type === 'noauth' || auth.type === 'inherit') {
+        // When inherit (or no auth set), fall back to collection-level auth
+        const a = (auth?.type === 'inherit' || !auth) ? collectionAuth : auth;
+
+        if (!a || a.type === 'noauth' || a.type === 'inherit') {
             return headersWithAuth;
         }
 
-        if (auth.type === 'basic' && auth.basic?.username) {
-            const credentials = btoa(`${auth.basic.username}:${auth.basic.password || ''}`);
+        if (a.type === 'basic' && a.basic?.username) {
+            const credentials = btoa(`${a.basic.username}:${a.basic.password || ''}`);
             headersWithAuth['Authorization'] = `Basic ${credentials}`;
         }
 
-        if (auth.type === 'bearer' && auth.bearer?.token) {
-            headersWithAuth['Authorization'] = `Bearer ${auth.bearer.token}`;
+        if (a.type === 'bearer' && a.bearer?.token) {
+            headersWithAuth['Authorization'] = `Bearer ${a.bearer.token}`;
         }
 
-        if (auth.type === 'jwt' && auth.jwt?.token) {
-            headersWithAuth['Authorization'] = `Bearer ${auth.jwt.token}`;
+        if (a.type === 'jwt' && a.jwt?.token) {
+            headersWithAuth['Authorization'] = `Bearer ${a.jwt.token}`;
         }
 
-        if (auth.type === 'digest' && auth.digest?.username) {
-            // Digest auth is typically handled by the backend
-            // For now, we'll store digest params as a header to be processed
-            headersWithAuth['X-Digest-Auth'] = JSON.stringify(auth.digest);
+        if (a.type === 'digest' && a.digest?.username) {
+            headersWithAuth['X-Digest-Auth'] = JSON.stringify(a.digest);
         }
 
-        if (auth.type === 'oauth1' && auth.oauth1?.accessToken) {
-            // OAuth 1.0 requires complex signing - typically handled by backend
-            headersWithAuth['X-OAuth1-Auth'] = JSON.stringify(auth.oauth1);
+        if (a.type === 'oauth1' && a.oauth1?.accessToken) {
+            headersWithAuth['X-OAuth1-Auth'] = JSON.stringify(a.oauth1);
         }
 
-        if (auth.type === 'oauth2' && auth.oauth2?.accessToken) {
-            const tokenType = auth.oauth2.tokenType || 'Bearer';
-            headersWithAuth['Authorization'] = `${tokenType} ${auth.oauth2.accessToken}`;
+        if (a.type === 'oauth2' && a.oauth2?.accessToken) {
+            const tokenType = a.oauth2.tokenType || 'Bearer';
+            headersWithAuth['Authorization'] = `${tokenType} ${a.oauth2.accessToken}`;
         }
 
-        if (auth.type === 'hawk' && auth.hawk?.authId) {
-            // Hawk auth requires complex header generation - typically handled by backend
-            headersWithAuth['X-Hawk-Auth'] = JSON.stringify(auth.hawk);
+        if (a.type === 'hawk' && a.hawk?.authId) {
+            headersWithAuth['X-Hawk-Auth'] = JSON.stringify(a.hawk);
         }
 
-        if (auth.type === 'awssig' && auth.awssig?.accessKey) {
-            // AWS Signature requires complex signing - typically handled by backend
-            headersWithAuth['X-AWS-Signature'] = JSON.stringify(auth.awssig);
+        if (a.type === 'awssig' && a.awssig?.accessKey) {
+            headersWithAuth['X-AWS-Signature'] = JSON.stringify(a.awssig);
         }
 
-        if (auth.type === 'ntlm' && auth.ntlm?.username) {
-            // NTLM requires complex negotiation - typically handled by backend
-            headersWithAuth['X-NTLM-Auth'] = JSON.stringify(auth.ntlm);
+        if (a.type === 'ntlm' && a.ntlm?.username) {
+            headersWithAuth['X-NTLM-Auth'] = JSON.stringify(a.ntlm);
         }
 
-        if (auth.type === 'apikey' && auth.apikey?.key && auth.apikey?.value) {
-            if (auth.apikey.addTo === 'header') {
-                headersWithAuth[auth.apikey.key] = auth.apikey.value;
+        if (a.type === 'apikey' && a.apikey?.key && a.apikey?.value) {
+            if (a.apikey.addTo === 'header') {
+                headersWithAuth[a.apikey.key] = a.apikey.value;
             }
         }
 
-        if (auth.type === 'akamai' && auth.akamai?.clientToken) {
-            // Akamai EdgeGrid requires complex header generation - typically handled by backend
-            headersWithAuth['X-Akamai-Auth'] = JSON.stringify(auth.akamai);
+        if (a.type === 'akamai' && a.akamai?.clientToken) {
+            headersWithAuth['X-Akamai-Auth'] = JSON.stringify(a.akamai);
         }
 
-        if (auth.type === 'asap' && auth.asap?.issuer) {
-            // ASAP requires JWT generation - typically handled by backend
-            headersWithAuth['X-ASAP-Auth'] = JSON.stringify(auth.asap);
+        if (a.type === 'asap' && a.asap?.issuer) {
+            headersWithAuth['X-ASAP-Auth'] = JSON.stringify(a.asap);
         }
 
         return headersWithAuth;
@@ -231,6 +263,7 @@ export default function RequestBuilder({
         body?: string;
         queryParams?: PostmanKeyValue[];
         auth?: Authorization;
+        docs?: string;
     }) => {
         if (isInitialMount.current) return;
         if (!onUpdateRef.current) return;
@@ -246,6 +279,7 @@ export default function RequestBuilder({
             body: updates.body ?? body,
             queryParams: currentParams,
             auth: updates.auth !== undefined ? updates.auth : auth,
+            docs: updates.docs !== undefined ? updates.docs : docs,
         };
 
         // Only auto-generate tab name for fresh "Untitled" tabs when the URL changes.
@@ -303,7 +337,7 @@ export default function RequestBuilder({
                 method,
                 url: finalUrl,
                 headers: headersWithAuth,
-                body: bodyType === 'raw' ? body : '',
+                body: bodyType === 'raw' ? stripBodyComments(body) : '',
                 body_type: bodyType,
                 form_data: bodyType === 'form-data' ? formData.filter(f => f.key) : undefined,
                 query_params: {},
@@ -444,134 +478,126 @@ export default function RequestBuilder({
                     </p>
                 </div>
             )}
-            <div className="mb-2 md:mb-3 space-y-2 md:space-y-0 md:flex md:gap-2 md:items-center">
-                <div className="flex gap-2 items-center md:flex-1 md:min-w-0">
-                    <select
-                        value={method}
-                        onChange={(e) => {
-                            setMethod(e.target.value);
-                            notifyUpdate({ method: e.target.value });
-                        }}
-                        className="border border-border rounded px-2 py-1.5 text-sm font-medium focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground shadow-sm flex-shrink-0"
-                    >
-                        <option>GET</option>
-                        <option>POST</option>
-                        <option>PUT</option>
-                        <option>DELETE</option>
-                        <option>PATCH</option>
-                    </select>
+            <div className="mb-3 flex items-stretch border border-border rounded-md overflow-hidden">
+                {/* Method */}
+                <select
+                    value={method}
+                    onChange={(e) => {
+                        setMethod(e.target.value);
+                        notifyUpdate({ method: e.target.value });
+                    }}
+                    className="px-2 py-2 text-sm font-semibold bg-transparent outline-none border-r border-border shrink-0 cursor-pointer"
+                    style={{ color: ({ GET: '#16a34a', POST: '#2563eb', PUT: '#ca8a04', DELETE: '#dc2626', PATCH: '#0d9488' } as Record<string, string>)[method] || 'var(--primary)' }}
+                >
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                    <option>PATCH</option>
+                </select>
 
-                    <div className="flex-1 min-w-0">
-                        <VariableInput
-                            value={url}
-                            onChange={(newUrl) => {
-                                // Detect pasted cURL command
-                                const trimmed = newUrl.trim();
-                                if (/^curl\s/i.test(trimmed)) {
-                                    try {
-                                        const parsed = parseCurl(trimmed);
-                                        setUrl(parsed.url);
-                                        setMethod(parsed.method);
-                                        // Always reset body/bodyType — if curl has no body, clear it
-                                        setBody(parsed.body || '');
-                                        setBodyType(parsed.body ? 'raw' : 'none');
-                                        // Always reset headers — if curl has no headers, clear them
-                                        const parsedHeaders = Object.entries(parsed.headers).map(([key, value]) => ({ key, value }));
-                                        setHeaders(parsedHeaders);
-                                        const parsedParams = parseQueryParamsFromUrl(parsed.url);
-                                        setQueryParams(parsedParams.length > 0 ? parsedParams : []);
-                                        notifyUpdate({
-                                            method: parsed.method,
-                                            url: parsed.url,
-                                            headers: parsedHeaders,
-                                            body: parsed.body || '',
-                                            queryParams: parsedParams,
-                                        });
-                                        return;
-                                    } catch {
-                                        // Not a valid curl — fall through to normal URL handling
-                                    }
+                {/* URL */}
+                <div className="flex-1 min-w-0">
+                    <VariableInput
+                        value={url}
+                        onChange={(newUrl) => {
+                            const trimmed = newUrl.trim();
+                            if (/^curl\s/i.test(trimmed)) {
+                                try {
+                                    const parsed = parseCurl(trimmed);
+                                    setUrl(parsed.url);
+                                    setMethod(parsed.method);
+                                    setBody(parsed.body || '');
+                                    setBodyType(parsed.body ? 'raw' : 'none');
+                                    const parsedHeaders = Object.entries(parsed.headers).map(([key, value]) => ({ key, value }));
+                                    setHeaders(parsedHeaders);
+                                    const parsedParams = parseQueryParamsFromUrl(parsed.url);
+                                    setQueryParams(parsedParams.length > 0 ? parsedParams : []);
+                                    notifyUpdate({
+                                        method: parsed.method,
+                                        url: parsed.url,
+                                        headers: parsedHeaders,
+                                        body: parsed.body || '',
+                                        queryParams: parsedParams,
+                                    });
+                                    return;
+                                } catch {
+                                    // Not a valid curl — fall through to normal URL handling
                                 }
-
-                                setUrl(newUrl);
-                                // Parse query params from URL and update params list
-                                if (!isUpdatingFromParams.current) {
-                                    const parsedParams = parseQueryParamsFromUrl(newUrl);
-                                    // Merge with existing params that have keys not in URL
-                                    // This preserves params with empty keys being edited
-                                    const existingEmptyKeyParams = queryParams.filter(p => !p.key);
-                                    const newParams = [...parsedParams, ...existingEmptyKeyParams];
-                                    setQueryParams(newParams.length > 0 ? newParams : []);
-                                    notifyUpdate({ url: newUrl, queryParams: newParams });
-                                } else {
-                                    notifyUpdate({ url: newUrl });
-                                }
-                            }}
-                            placeholder="Enter request URL or paste cURL"
-                            environments={environments}
-                            selectedEnvId={selectedEnvId}
-                            className="shadow-sm"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex gap-2 items-center flex-wrap min-w-0">
-                    <select
-                        value={selectedEnvId || ''}
-                        onChange={(e) => {
-                            const newEnvId = e.target.value ? Number(e.target.value) : undefined;
-                            setSelectedEnvId(newEnvId);
-                            onEnvironmentChange?.(newEnvId);
-                        }}
-                        className="border border-border rounded-lg px-2 sm:px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground shadow-sm flex-1 md:flex-initial min-w-0 max-w-[140px] sm:max-w-none"
-                    >
-                        <option value="">No Environment</option>
-                        {environments.map(env => (
-                            <option key={env.id} value={env.id}>{env.name}</option>
-                        ))}
-                    </select>
-
-                    <button
-                        onClick={handleSend}
-                        disabled={loading}
-                        className={`
-              px-4 md:px-6 py-2 rounded-lg shadow-sm font-medium text-sm transition-colors duration-150
-              ${loading
-                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                            : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                        }
-            `}
-                    >
-                        {loading ? 'Sending...' : 'Send'}
-                    </button>
-                    <button
-                        onClick={() => {
-                            const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key.trim(), h.value]));
-                            const curl = generateCurl({
-                                method,
-                                url,
-                                headers: headersObj,
-                                body: bodyType === 'raw' ? body : undefined,
-                            });
-                            navigator.clipboard.writeText(curl);
-                            setCurlCopied(true);
-                            setTimeout(() => setCurlCopied(false), 2000);
-                        }}
-                        className="px-3 md:px-4 py-2 rounded-lg shadow-sm font-medium text-sm transition-colors duration-150 bg-muted-foreground hover:bg-muted-foreground/80 text-background"
-                        title="Copy as cURL"
-                    >
-                        {curlCopied ? 'Copied!' : 'cURL'}
-                    </button>
-                    <SaveButton
-                        text={{ idle: "Save", saving: "Saving...", saved: "Saved!" }}
-                        onSave={async () => {
-                            notifyUpdate({});
-                            if (onSaveToCollection) {
-                                await onSaveToCollection();
+                            }
+                            setUrl(newUrl);
+                            if (!isUpdatingFromParams.current) {
+                                const parsedParams = parseQueryParamsFromUrl(newUrl);
+                                const existingEmptyKeyParams = queryParams.filter(p => !p.key);
+                                const newParams = [...parsedParams, ...existingEmptyKeyParams];
+                                setQueryParams(newParams.length > 0 ? newParams : []);
+                                notifyUpdate({ url: newUrl, queryParams: newParams });
+                            } else {
+                                notifyUpdate({ url: newUrl });
                             }
                         }}
+                        placeholder="Enter request URL or paste cURL"
+                        environments={environments}
+                        selectedEnvId={selectedEnvId}
+                        className="vi-no-border"
                     />
                 </div>
+
+                {/* Environment */}
+                <select
+                    value={selectedEnvId || ''}
+                    onChange={(e) => {
+                        const newEnvId = e.target.value ? Number(e.target.value) : undefined;
+                        setSelectedEnvId(newEnvId);
+                        onEnvironmentChange?.(newEnvId);
+                    }}
+                    className="border-l border-border px-2 py-2 text-xs bg-transparent text-muted-foreground outline-none shrink-0 max-w-[120px] cursor-pointer"
+                >
+                    <option value="">No Env</option>
+                    {environments.map(env => (
+                        <option key={env.id} value={env.id}>{env.name}</option>
+                    ))}
+                </select>
+
+                {/* Send */}
+                <button
+                    onClick={handleSend}
+                    disabled={loading}
+                    className={`border-l border-border px-4 py-2 text-sm font-medium shrink-0 transition-colors ${
+                        loading
+                            ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                            : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                    }`}
+                >
+                    {loading ? 'Sending...' : 'Send'}
+                </button>
+
+                {/* cURL */}
+                <button
+                    onClick={() => {
+                        const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key.trim(), h.value]));
+                        const curl = generateCurl({ method, url, headers: headersObj, body: bodyType === 'raw' ? body : undefined });
+                        navigator.clipboard.writeText(curl);
+                        setCurlCopied(true);
+                        setTimeout(() => setCurlCopied(false), 2000);
+                    }}
+                    className="border-l border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors shrink-0"
+                    title="Copy as cURL"
+                >
+                    {curlCopied ? 'Copied!' : 'cURL'}
+                </button>
+
+                {/* Save */}
+                <SaveButton
+                    text={{ idle: "Save", saving: "Saving...", saved: "Saved!" }}
+                    onSave={async () => {
+                        notifyUpdate({});
+                        if (onSaveToCollection) {
+                            await onSaveToCollection();
+                        }
+                    }}
+                    className="border-l border-border !rounded-none !shadow-none"
+                />
             </div>
 
             {/* Tab Bar */}
@@ -655,6 +681,24 @@ export default function RequestBuilder({
                             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                         )}
                     </button>
+                    <button
+                        onClick={() => setActiveSection('docs')}
+                        className={`relative px-3 py-1.5 text-xs font-medium transition-colors ${
+                            activeSection === 'docs'
+                                ? 'text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+            <span className="flex items-center gap-1.5">
+              Docs
+                {docs && (
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                )}
+            </span>
+                        {activeSection === 'docs' && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                        )}
+                    </button>
                 </div>
 
                 {/* Tab Content */}
@@ -662,46 +706,48 @@ export default function RequestBuilder({
                     {/* Params Tab */}
                     {activeSection === 'params' && (
                         <div>
-                            {queryParams.map((param, index) => (
-                                <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                                    <div className="w-full md:flex-1">
-                                        <label htmlFor={`param-key-${index}`} className="sr-only">Parameter key</label>
-                                        <input
-                                            id={`param-key-${index}`}
-                                            type="text"
-                                            value={param.key}
-                                            onChange={(e) => updateQueryParam(index, 'key', e.target.value)}
-                                            placeholder="Key"
-                                            className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2 md:flex-1 md:min-w-0">
-                                        <div className="flex-1 min-w-0">
-                                            <VariableInput
-                                                value={param.value}
-                                                onChange={(value) => updateQueryParam(index, 'value', value)}
-                                                placeholder="Value"
-                                                environments={environments}
-                                                selectedEnvId={selectedEnvId}
+                            {queryParams.length > 0 && (
+                                <div className="border border-border rounded-md overflow-hidden divide-y divide-border mb-2">
+                                    {queryParams.map((param, index) => (
+                                        <div key={index} className="flex items-stretch group hover:bg-muted/30 transition-colors">
+                                            <label htmlFor={`param-key-${index}`} className="sr-only">Parameter key</label>
+                                            <input
+                                                id={`param-key-${index}`}
+                                                type="text"
+                                                value={param.key}
+                                                onChange={(e) => updateQueryParam(index, 'key', e.target.value)}
+                                                placeholder="Key"
+                                                className="flex-1 px-3 py-2 text-sm bg-transparent text-foreground outline-none border-r border-border placeholder:text-muted-foreground/60"
                                             />
+                                            <div className="flex-1 min-w-0">
+                                                <VariableInput
+                                                    value={param.value}
+                                                    onChange={(value) => updateQueryParam(index, 'value', value)}
+                                                    placeholder="Value"
+                                                    environments={environments}
+                                                    selectedEnvId={selectedEnvId}
+                                                    className="vi-no-border"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeQueryParam(index)}
+                                                className="w-8 flex items-center justify-center border-l border-border text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-colors shrink-0 outline-none opacity-0 group-hover:opacity-100"
+                                                title="Remove parameter"
+                                                aria-label="Remove parameter"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => removeQueryParam(index)}
-                                            className="p-2 md:px-3 md:py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm transition-colors duration-150 shrink-0"
-                                        >
-                                            <svg className="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            <span className="hidden md:inline">Remove</span>
-                                        </button>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                             <button
                                 onClick={addQueryParam}
-                                className="mt-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm transition-colors duration-150"
+                                className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-muted/50 transition-colors"
                             >
-                                Add Param
+                                + Add Param
                             </button>
                         </div>
                     )}
@@ -709,46 +755,48 @@ export default function RequestBuilder({
                     {/* Headers Tab */}
                     {activeSection === 'headers' && (
                         <div>
-                            {headers.map((header, index) => (
-                                <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                                    <div className="w-full md:flex-1">
-                                        <label htmlFor={`header-key-${index}`} className="sr-only">Header key</label>
-                                        <input
-                                            id={`header-key-${index}`}
-                                            type="text"
-                                            value={header.key}
-                                            onChange={(e) => updateHeader(index, 'key', e.target.value)}
-                                            placeholder="Key"
-                                            className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                                        />
-                                    </div>
-                                    <div className="flex gap-2 md:flex-1 md:min-w-0">
-                                        <div className="flex-1 min-w-0">
-                                            <VariableInput
-                                                value={header.value}
-                                                onChange={(value) => updateHeader(index, 'value', value)}
-                                                placeholder="Value"
-                                                environments={environments}
-                                                selectedEnvId={selectedEnvId}
+                            {headers.length > 0 && (
+                                <div className="border border-border rounded-md overflow-hidden divide-y divide-border mb-2">
+                                    {headers.map((header, index) => (
+                                        <div key={index} className="flex items-stretch group hover:bg-muted/30 transition-colors">
+                                            <label htmlFor={`header-key-${index}`} className="sr-only">Header key</label>
+                                            <input
+                                                id={`header-key-${index}`}
+                                                type="text"
+                                                value={header.key}
+                                                onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                                                placeholder="Key"
+                                                className="flex-1 px-3 py-2 text-sm bg-transparent text-foreground outline-none border-r border-border placeholder:text-muted-foreground/60"
                                             />
+                                            <div className="flex-1 min-w-0">
+                                                <VariableInput
+                                                    value={header.value}
+                                                    onChange={(value) => updateHeader(index, 'value', value)}
+                                                    placeholder="Value"
+                                                    environments={environments}
+                                                    selectedEnvId={selectedEnvId}
+                                                    className="vi-no-border"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeHeader(index)}
+                                                className="w-8 flex items-center justify-center border-l border-border text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-colors shrink-0 outline-none opacity-0 group-hover:opacity-100"
+                                                title="Remove header"
+                                                aria-label="Remove header"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => removeHeader(index)}
-                                            className="p-2 md:px-3 md:py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm transition-colors duration-150 shrink-0"
-                                        >
-                                            <svg className="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            <span className="hidden md:inline">Remove</span>
-                                        </button>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                             <button
                                 onClick={addHeader}
-                                className="mt-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm transition-colors duration-150"
+                                className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-muted/50 transition-colors"
                             >
-                                Add Header
+                                + Add Header
                             </button>
                         </div>
                     )}
@@ -825,7 +873,7 @@ export default function RequestBuilder({
                                                 onClick={() => {
                                                     try {
                                                         const placeholders: string[] = [];
-                                                        const safeBody = body.replace(/\{\{([^}]+)\}\}/g, (m) => {
+                                                        const safeBody = stripBodyComments(body).replace(/\{\{([^}]+)\}\}/g, (m) => {
                                                             const idx = placeholders.length;
                                                             placeholders.push(m);
                                                             return `"__VAR_${idx}__"`;
@@ -877,10 +925,10 @@ export default function RequestBuilder({
 
                             {bodyType === 'form-data' && (
                                 <div>
-                                    {formData.map((item, index) => (
-                                        <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2 md:items-center">
-                                            <div className="flex gap-2">
-                                                <div className="flex-1 md:w-auto">
+                                    {formData.length > 0 && (
+                                        <div className="border border-border rounded-md overflow-hidden divide-y divide-border mb-2">
+                                            {formData.map((item, index) => (
+                                                <div key={index} className="flex items-stretch group hover:bg-muted/30 transition-colors">
                                                     <label htmlFor={`formdata-key-${index}`} className="sr-only">Field key</label>
                                                     <input
                                                         id={`formdata-key-${index}`}
@@ -888,20 +936,83 @@ export default function RequestBuilder({
                                                         value={item.key}
                                                         onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
                                                         placeholder="Key"
-                                                        className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
+                                                        className="flex-1 px-3 py-2 text-sm bg-transparent text-foreground outline-none border-r border-border placeholder:text-muted-foreground/60"
                                                     />
+                                                    <select
+                                                        value={item.type}
+                                                        onChange={(e) => updateFormDataItem(index, 'type', e.target.value)}
+                                                        className="px-2 py-2 text-xs bg-transparent text-muted-foreground outline-none border-r border-border"
+                                                    >
+                                                        <option value="text">Text</option>
+                                                        <option value="file">File</option>
+                                                    </select>
+                                                    <div className="flex-1 min-w-0">
+                                                        {item.type === 'text' ? (
+                                                            <VariableInput
+                                                                value={item.value}
+                                                                onChange={(value) => updateFormDataItem(index, 'value', value)}
+                                                                placeholder="Value"
+                                                                environments={environments}
+                                                                selectedEnvId={selectedEnvId}
+                                                                className="vi-no-border"
+                                                            />
+                                                        ) : (
+                                                            <label className="flex items-center gap-2 cursor-pointer px-3 py-2 text-sm hover:bg-accent transition-colors text-foreground h-full">
+                                                                <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <span className="text-muted-foreground truncate text-sm">
+                                                                    {item.file ? item.file.name : 'Choose file...'}
+                                                                </span>
+                                                                <input
+                                                                    type="file"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) updateFormDataItem(index, 'file', file);
+                                                                    }}
+                                                                    className="hidden"
+                                                                />
+                                                            </label>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeFormDataItem(index)}
+                                                        className="w-8 flex items-center justify-center border-l border-border text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-colors shrink-0 outline-none opacity-0 group-hover:opacity-100"
+                                                        title="Remove field"
+                                                        aria-label="Remove field"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                                <select
-                                                    value={item.type}
-                                                    onChange={(e) => updateFormDataItem(index, 'type', e.target.value)}
-                                                    className="border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                                                >
-                                                    <option value="text">Text</option>
-                                                    <option value="file">File</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex gap-2 md:flex-1 md:min-w-0">
-                                                {item.type === 'text' ? (
+                                            ))}
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={addFormDataItem}
+                                        className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-muted/50 transition-colors"
+                                    >
+                                        + Add Field
+                                    </button>
+                                </div>
+                            )}
+
+                            {bodyType === 'x-www-form-urlencoded' && (
+                                <div>
+                                    {formData.length > 0 && (
+                                        <div className="border border-border rounded-md overflow-hidden divide-y divide-border mb-2">
+                                            {formData.map((item, index) => (
+                                                <div key={index} className="flex items-stretch group hover:bg-muted/30 transition-colors">
+                                                    <label htmlFor={`urlencoded-key-${index}`} className="sr-only">Field key</label>
+                                                    <input
+                                                        id={`urlencoded-key-${index}`}
+                                                        type="text"
+                                                        value={item.key}
+                                                        onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
+                                                        placeholder="Key"
+                                                        className="flex-1 px-3 py-2 text-sm bg-transparent text-foreground outline-none border-r border-border placeholder:text-muted-foreground/60"
+                                                    />
                                                     <div className="flex-1 min-w-0">
                                                         <VariableInput
                                                             value={item.value}
@@ -909,93 +1020,75 @@ export default function RequestBuilder({
                                                             placeholder="Value"
                                                             environments={environments}
                                                             selectedEnvId={selectedEnvId}
+                                                            className="vi-no-border"
                                                         />
                                                     </div>
-                                                ) : (
-                                                    <div className="flex-1 min-w-0">
-                                                        <label className="flex items-center gap-2 cursor-pointer border border-border rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors text-foreground">
-                                                            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                            <span className="text-muted-foreground truncate">
-                                {item.file ? item.file.name : 'Choose file...'}
-                              </span>
-                                                            <input
-                                                                type="file"
-                                                                onChange={(e) => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (file) updateFormDataItem(index, 'file', file);
-                                                                }}
-                                                                className="hidden"
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                )}
-                                                <button
-                                                    onClick={() => removeFormDataItem(index)}
-                                                    className="p-2 md:px-3 md:py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm transition-colors duration-150 shrink-0"
-                                                >
-                                                    <svg className="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    <span className="hidden md:inline">Remove</span>
-                                                </button>
-                                            </div>
+                                                    <button
+                                                        onClick={() => removeFormDataItem(index)}
+                                                        className="w-8 flex items-center justify-center border-l border-border text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-colors shrink-0 outline-none opacity-0 group-hover:opacity-100"
+                                                        title="Remove field"
+                                                        aria-label="Remove field"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    )}
                                     <button
                                         onClick={addFormDataItem}
-                                        className="mt-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm transition-colors duration-150"
+                                        className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-muted/50 transition-colors"
                                     >
-                                        Add Field
+                                        + Add Field
                                     </button>
                                 </div>
                             )}
+                        </div>
+                    )}
 
-                            {bodyType === 'x-www-form-urlencoded' && (
-                                <div>
-                                    {formData.map((item, index) => (
-                                        <div key={index} className="flex flex-col gap-1 mb-3 md:flex-row md:gap-3 md:mb-2">
-                                            <div className="w-full md:flex-1">
-                                                <label htmlFor={`urlencoded-key-${index}`} className="sr-only">Field key</label>
-                                                <input
-                                                    id={`urlencoded-key-${index}`}
-                                                    type="text"
-                                                    value={item.key}
-                                                    onChange={(e) => updateFormDataItem(index, 'key', e.target.value)}
-                                                    placeholder="Key"
-                                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none bg-card text-foreground"
-                                                />
-                                            </div>
-                                            <div className="flex gap-2 md:flex-1 md:min-w-0">
-                                                <div className="flex-1 min-w-0">
-                                                    <VariableInput
-                                                        value={item.value}
-                                                        onChange={(value) => updateFormDataItem(index, 'value', value)}
-                                                        placeholder="Value"
-                                                        environments={environments}
-                                                        selectedEnvId={selectedEnvId}
-                                                    />
-                                                </div>
-                                                <button
-                                                    onClick={() => removeFormDataItem(index)}
-                                                    className="p-2 md:px-3 md:py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm transition-colors duration-150 shrink-0"
-                                                >
-                                                    <svg className="w-4 h-4 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    <span className="hidden md:inline">Remove</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                    {/* Docs Tab */}
+                    {activeSection === 'docs' && (
+                        <div>
+                            <div className="flex justify-end mb-2">
+                                <div className="flex bg-muted rounded-md p-0.5">
                                     <button
-                                        onClick={addFormDataItem}
-                                        className="mt-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm shadow-sm transition-colors duration-150"
+                                        onClick={() => setDocsEditMode(false)}
+                                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${!docsEditMode ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                                     >
-                                        Add Field
+                                        Preview
+                                    </button>
+                                    <button
+                                        onClick={() => setDocsEditMode(true)}
+                                        className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${docsEditMode ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Edit
                                     </button>
                                 </div>
+                            </div>
+                            {docsEditMode ? (
+                                <textarea
+                                    value={docs}
+                                    onChange={(e) => {
+                                        setDocs(e.target.value);
+                                        notifyUpdate({ docs: e.target.value });
+                                    }}
+                                    placeholder="Add notes or documentation for this request (supports Markdown)..."
+                                    className="w-full min-h-[200px] px-3 py-2 text-sm bg-transparent text-foreground border border-border rounded-md outline-none resize-y placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-primary/50 font-mono"
+                                />
+                            ) : docs ? (
+                                <div
+                                    className="prose prose-sm max-w-none text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h2]:mt-4 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_h3]:mt-3 [&_p]:text-sm [&_p]:mb-2 [&_ul]:text-sm [&_ul]:mb-2 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:text-sm [&_ol]:mb-2 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:mb-0.5 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_pre]:text-xs [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:text-xs [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_th]:font-semibold [&_th]:text-left [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_hr]:border-border [&_hr]:my-3 [&_strong]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground"
+                                    dangerouslySetInnerHTML={{ __html: marked(docs) as string }}
+                                />
+                            ) : (
+                                <button
+                                    onClick={() => setDocsEditMode(true)}
+                                    className="w-full text-center py-8 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors"
+                                >
+                                    Click Edit to add documentation for this request
+                                </button>
                             )}
                         </div>
                     )}
@@ -1004,6 +1097,7 @@ export default function RequestBuilder({
                     {activeSection === 'auth' && (
                         <AuthorizationPanel
                             auth={auth}
+                            collectionAuth={collectionAuth}
                             onAuthChange={(newAuth) => {
                                 setAuth(newAuth);
                                 notifyUpdate({ auth: newAuth });
