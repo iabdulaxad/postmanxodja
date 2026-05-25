@@ -330,9 +330,24 @@ export interface RequestTab {
     auth?: Authorization;
     request?: PostmanRequest;
     isDirty?: boolean;
+    // Discriminator: undefined or 'http' for HTTP tabs, 'websocket' for WS tabs.
+    // WS tabs are session-only (not persisted via /api/tabs).
+    type?: 'http' | 'websocket';
     // Collection source info for syncing changes back
     collectionId?: number;
     itemPath?: string; // Path to the item in the collection (e.g., "folder1/folder2/request")
     savedResponseIndex?: number; // Index of saved response this tab was opened from
     docs?: string;
+}
+
+// WebSocket types
+export type WSConnectionState = 'closed' | 'connecting' | 'open' | 'closing';
+
+export type WSDirection = 'sent' | 'received' | 'system';
+
+export interface WSMessage {
+    id: string;
+    direction: WSDirection;
+    body: string;
+    timestamp: number;
 }

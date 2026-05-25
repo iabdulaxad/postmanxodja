@@ -97,6 +97,15 @@ func main() {
 	// Public invite route (to view invite details from email link)
 	r.GET("/api/invites/:token", handlers.GetInviteByToken)
 
+	// WebSocket endpoints
+	// Public echo endpoint for connectivity testing
+	r.GET("/ws/echo", handlers.WebSocketEcho)
+	// Authenticated proxy: lets the UI connect to any ws(s):// target through
+	// the backend. Browsers cannot set headers on the WS handshake, so the
+	// JWT is read from the `token` query param or a Sec-WebSocket-Protocol
+	// "bearer.<jwt>" subprotocol — auth happens inside the handler.
+	r.GET("/api/ws/proxy", handlers.WebSocketProxy)
+
 	// Protected routes
 	api := r.Group("/api")
 	api.Use(middleware.AuthMiddleware())

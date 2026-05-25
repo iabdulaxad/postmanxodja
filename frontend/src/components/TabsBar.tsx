@@ -8,6 +8,7 @@ interface TabsBarProps {
   onTabClose: (tabId: string) => void;
   onTabRename: (tabId: string, newName: string) => void;
   onNewTab: () => void;
+  onNewWebSocketTab: () => void;
   onImportCurl: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function TabsBar({
   onTabClose,
   onTabRename,
   onNewTab,
+  onNewWebSocketTab,
   onImportCurl,
 }: TabsBarProps) {
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -144,9 +146,15 @@ export default function TabsBar({
               }
             `}
           >
-            <span className={`text-[10px] font-semibold uppercase tracking-wide ${getMethodColor(tab.method)}`}>
-              {tab.method}
-            </span>
+            {tab.type === 'websocket' ? (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+                WS
+              </span>
+            ) : (
+              <span className={`text-[10px] font-semibold uppercase tracking-wide ${getMethodColor(tab.method)}`}>
+                {tab.method}
+              </span>
+            )}
             {renamingTabId === tab.id ? (
               <input
                 type="text"
@@ -223,6 +231,14 @@ export default function TabsBar({
           <svg className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
+        </button>
+        <button
+          onClick={onNewWebSocketTab}
+          className="px-2 py-1 hover:bg-primary/10 dark:hover:bg-primary/20 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring text-[10px] font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400"
+          title="New WebSocket Tab"
+          aria-label="New WebSocket Tab"
+        >
+          + WS
         </button>
       </div>
     </div>
