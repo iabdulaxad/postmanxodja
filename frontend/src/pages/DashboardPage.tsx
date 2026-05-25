@@ -3,6 +3,7 @@ import CollectionImporter from '../components/CollectionImporter';
 import CollectionList from '../components/CollectionList';
 import RequestBuilder from '../components/RequestBuilder';
 import ResponseViewer from '../components/ResponseViewer';
+import WebSocketBuilder from '../components/WebSocketBuilder';
 import EnvironmentPanel from '../components/EnvironmentPanel';
 import ResizableSplitter from '../components/ResizableSplitter';
 import HorizontalSplitter from '../components/HorizontalSplitter';
@@ -302,6 +303,21 @@ export default function DashboardPage() {
         setTabs(prev => [...prev, newTab]);
         setActiveTabId(newTab.id);
     }, [activeCollectionId]);
+
+    const handleNewWebSocketTab = useCallback(() => {
+        const newTab: RequestTab = {
+            id: generateId(),
+            name: 'New WebSocket',
+            method: 'WS',
+            url: '',
+            headers: [],
+            body: '',
+            queryParams: [],
+            type: 'websocket',
+        };
+        setTabs(prev => [...prev, newTab]);
+        setActiveTabId(newTab.id);
+    }, []);
 
     const handleImportCurl = useCallback(() => {
         setCurlImportOpen(true);
@@ -890,6 +906,7 @@ export default function DashboardPage() {
                     onTabClose={handleTabClose}
                     onTabRename={handleTabRename}
                     onNewTab={handleNewTab}
+                    onNewWebSocketTab={handleNewWebSocketTab}
                     onImportCurl={handleImportCurl}
                 />
 
@@ -926,6 +943,13 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
+                ) : activeTab?.type === 'websocket' ? (
+                    <WebSocketBuilder
+                        key={activeTabId}
+                        initialUrl={activeTab.url}
+                        initialName={activeTab.name}
+                        onUpdate={handleTabUpdate}
+                    />
                 ) : (
                     <ResizableSplitter
                         initialTopHeight={50}
