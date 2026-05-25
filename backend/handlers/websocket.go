@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
@@ -85,6 +86,27 @@ func WebSocketProxy(c *gin.Context) {
 		return
 	}
 
+	// Optional custom headers (URL-encoded JSON object). Browsers can't set
+	// these on a WS handshake, which is one of the main reasons to route a
+	// request through this proxy.
+	upstreamHeaders, err := parseProxyHeaders(c.Query("headers"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "headers must be a JSON object of string→string: " + err.Error()})
+		return
+	}
+
+	// Optional subprotocols to forward upstream (comma-separated). These are
+	// distinct from the subprotocol used between the browser and this proxy
+	// (which carries the JWT).
+	var upstreamProtocols []string
+	if raw := c.Query("protocols"); raw != "" {
+		for _, p := range strings.Split(raw, ",") {
+			if p = strings.TrimSpace(p); p != "" {
+				upstreamProtocols = append(upstreamProtocols, p)
+			}
+		}
+	}
+
 	clientConn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("ws proxy: client upgrade failed: %v", err)
@@ -94,8 +116,9 @@ func WebSocketProxy(c *gin.Context) {
 
 	dialer := websocket.Dialer{
 		HandshakeTimeout: 15 * time.Second,
+		Subprotocols:     upstreamProtocols,
 	}
-	upstream, _, err := dialer.Dial(target, nil)
+	upstream, _, err := dialer.Dial(target, upstreamHeaders)
 	if err != nil {
 		log.Printf("ws proxy: upstream dial failed: %v", err)
 		_ = clientConn.WriteMessage(websocket.TextMessage, []byte("proxy: upstream dial failed: "+err.Error()))
@@ -152,6 +175,47 @@ func authenticateWS(c *gin.Context) bool {
 	c.Set("user_id", claims.UserID)
 	c.Set("email", claims.Email)
 	return true
+}
+
+// parseProxyHeaders decodes a URL-decoded JSON object into http.Header.
+// Empty input returns (nil, nil). The dialer accepts a nil Header.
+//
+// Reserved headers that gorilla.Dialer sets itself (Upgrade, Connection,
+// Sec-WebSocket-*) are dropped to avoid handshake corruption.
+func parseProxyHeaders(raw string) (http.Header, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	var kv map[string]string
+	if err := json.Unmarshal([]byte(raw), &kv); err != nil {
+		return nil, err
+	}
+	if len(kv) == 0 {
+		return nil, nil
+	}
+	reserved := map[string]bool{
+		"upgrade":                  true,
+		"connection":               true,
+		"sec-websocket-key":        true,
+		"sec-websocket-version":    true,
+		"sec-websocket-extensions": true,
+		"sec-websocket-protocol":   true,
+		"host":                     true,
+	}
+	h := http.Header{}
+	for k, v := range kv {
+		if k = strings.TrimSpace(k); k == "" {
+			continue
+		}
+		if reserved[strings.ToLower(k)] {
+			continue
+		}
+		h.Set(k, v)
+	}
+	if len(h) == 0 {
+		return nil, nil
+	}
+	return h, nil
 }
 
 func extractWSToken(c *gin.Context) string {

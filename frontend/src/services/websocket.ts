@@ -13,7 +13,16 @@ export interface WSClientHandlers {
 export interface WSConnectOptions {
   url: string;
   mode: WSConnectMode;
+  /**
+   * Sec-WebSocket-Protocol values. Supported in both direct and proxy mode.
+   */
   protocols?: string[];
+  /**
+   * Custom request headers to attach to the upstream handshake. Only honored
+   * in `proxy` mode — the browser WebSocket API forbids setting handshake
+   * headers from JS, so direct connections silently ignore this.
+   */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -39,22 +48,42 @@ export class WebSocketClient {
     }
 
     let target: string;
-    let protocols: string[] = opts.protocols ?? [];
+    // Browser-leg subprotocols. In proxy mode the upstream subprotocols are
+    // forwarded via query param, leaving this slot free for the auth token.
+    let browserProtocols: string[] = [];
 
     if (opts.mode === 'proxy') {
       const token = localStorage.getItem('access_token');
       const base = API_BASE_URL.replace(/^http/, 'ws');
-      target = `${base}/ws/proxy?target=${encodeURIComponent(opts.url)}`;
+      const params = new URLSearchParams();
+      params.set('target', opts.url);
+      if (opts.headers && Object.keys(opts.headers).length > 0) {
+        params.set('headers', JSON.stringify(opts.headers));
+      }
+      if (opts.protocols && opts.protocols.length > 0) {
+        params.set('protocols', opts.protocols.join(','));
+      }
+      target = `${base}/ws/proxy?${params.toString()}`;
       if (token) {
-        protocols = [`bearer.${token}`, ...protocols];
+        browserProtocols.push(`bearer.${token}`);
       }
     } else {
       target = opts.url;
+      if (opts.protocols && opts.protocols.length > 0) {
+        browserProtocols = [...opts.protocols];
+      }
+      if (opts.headers && Object.keys(opts.headers).length > 0) {
+        this.handlers.onSystem(
+          'custom headers ignored: the browser WebSocket API cannot set them — switch to Proxy mode to send headers',
+        );
+      }
     }
 
     let socket: WebSocket;
     try {
-      socket = protocols.length > 0 ? new WebSocket(target, protocols) : new WebSocket(target);
+      socket = browserProtocols.length > 0
+        ? new WebSocket(target, browserProtocols)
+        : new WebSocket(target);
     } catch (err) {
       this.handlers.onSystem(`failed to open socket: ${(err as Error).message}`);
       this.handlers.onStateChange('closed');
